@@ -87,6 +87,7 @@ export interface OpenSearchCognitoStackProps {
     id:                     string,
     stackId:                string,
     domainName:             string,
+    stage:                  string
 }
 
 /// ------------------------------
@@ -197,7 +198,7 @@ export class OpenSearchCognitoStack extends Stack {
         });
 
         this._cnameRecord = new CnameRecord(this, `${props.id}CNAMERecord`, {
-            recordName: props.domainName.toLowerCase(),
+            recordName: `${props.stage}.${props.domainName.toLowerCase()}`,
             zone:       this._hostedZone,
             domainName: this._domain.domainEndpoint
         });
