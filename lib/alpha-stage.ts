@@ -80,7 +80,8 @@ export class AlphaStage extends Stage {
             region:                 props.region,
             id:                     `${props.appName}OpenSearch`,
             stackId:                `${props.appName}OpenSearchStack`,
-            domainName:             props.opensearchDomain
+            domainName:             props.opensearchDomain,
+            stage:                  'alpha'
         });
 
         this.datasetsBucket = new S3Stack(this, {
