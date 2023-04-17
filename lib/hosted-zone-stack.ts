@@ -5,7 +5,7 @@
  */
 
 import { Construct } from 'constructs'
-import { Stack, Stage } from 'aws-cdk-lib'
+import { Stack } from 'aws-cdk-lib'
 import { HostedZone } from 'aws-cdk-lib/aws-route53'
 
 /// --------------------

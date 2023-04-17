@@ -16,6 +16,7 @@ import { SSMDocumentStack} from "./ssm-document-stack";
 import { GrantBucketReadPolicyStatement } from "./grant-bucket-read-policy-statement";
 import { GrantBucketPutPolicyStatement } from "./grant-bucket-put-policy-statement";
 import { GrantTableReadWritePolicyStatement } from "./grant-table-read-write-policy-statement";
+import {HostedZoneStack} from "./hosted-zone-stack";
 
 /// -----------------
 /// Alpha Stage Props
@@ -35,7 +36,8 @@ export interface AlphaStageProps {
     ingestionMachineImage:  IMachineImage,
     ingestionKeyPairName:   string,
     ingestionStartup:       string[],
-    trainingSSMDocument:    any
+    trainingSSMDocument:    any,
+    opensearchDomain:       string
 }
 
 /// --------------------------
@@ -56,6 +58,7 @@ export class AlphaStage extends Stage {
     private readonly trainingSSMDocumentStack:      SSMDocumentStack    ;
     private readonly mlTrainingInstanceStack:       InstanceStack       ;
     private readonly ingestionInstanceStack:        InstanceStack       ;
+    private readonly opensearchHostedZoneStack:     HostedZoneStack     ;
 
     /// -----------
     /// Constructor
@@ -65,6 +68,14 @@ export class AlphaStage extends Stage {
                 account:        props.account,
                 region:         props.region
             }});
+
+        this.opensearchHostedZoneStack = new HostedZoneStack(this, {
+            account:    props.account,
+            region:     props.region,
+            id:         `${props.appName}HostedZoneStack`,
+            stackId:    `${props.appName}HostedZone`,
+            domainName: props.opensearchDomain
+        });
 
         this.datasetsBucket = new S3Stack(this, {
             account:            props.account,

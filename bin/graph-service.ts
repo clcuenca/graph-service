@@ -25,7 +25,8 @@ const alphaStage = new AlphaStage(app, {
     ingestionMachineImage:  Constants.EC2.Instance.Ingestion.Image,
     ingestionKeyPairName:   Constants.EC2.Instance.Ingestion.KeyPairName,
     ingestionStartup:       Constants.EC2.Instance.Ingestion.Startup,
-    trainingSSMDocument:    Constants.EC2.Instance.MLTraining.Document
+    trainingSSMDocument:    Constants.EC2.Instance.MLTraining.Document,
+    opensearchDomain:       Constants.OpenSearch.Domain
 });
 
 const pipelineStack = new PipelineStack(app, {

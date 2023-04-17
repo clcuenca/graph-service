@@ -349,6 +349,15 @@ export module Constants {
 
     }
 
+    /// ----------
+    /// OpenSearch
+
+    export module OpenSearch {
+
+        export const Domain = `lowerbound.app`  ;
+
+    }
+
     /// ------
     /// Lambda
 
