@@ -99,7 +99,7 @@ export class CognitoStack extends Stack {
 
         this.userPool.addDomain(`${props.id}${props.prefix}Domain`, {
             cognitoDomain: {
-                domainPrefix: `${props.id.toLowerCase()}-${props.prefix}`
+                domainPrefix: `unlv-cs-789-${props.prefix}`
             }
         });
 
