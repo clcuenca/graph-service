@@ -77,7 +77,7 @@ export module Constants {
          */
         export module Repository {
 
-            export const Name               = 'cloud-graph-service'                       ;
+            export const Name               = 'graph-service'                       ;
             export const OutputDirectory    = 'cdk.out'                             ;
             export const Commands           = [
                 'npm install typescript',
