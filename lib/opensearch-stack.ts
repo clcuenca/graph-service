@@ -42,7 +42,7 @@ export class OpenSearchStack extends Stack {
     private readonly _cnameRecord:                  CnameRecord                     ;
     private readonly _cognitoAuthenticatedRole:     CognitoAuthenticatedRole        ;
     private readonly _cognitoUnauthenticatedRole:   CognitoUnauthenticatedRole      ;
-    private readonly _identityPoolRoleAttachement:  CfnIdentityPoolRoleAttachment   ;
+    private readonly _identityPoolRoleAttachment:   CfnIdentityPoolRoleAttachment   ;
 
     /// -----------
     /// Constructor
@@ -94,7 +94,7 @@ export class OpenSearchStack extends Stack {
             arns:           [`${this._domain.domainArn}/*`]
         });
 
-        this._identityPoolRoleAttachement = new CfnIdentityPoolRoleAttachment(this,
+        this._identityPoolRoleAttachment = new CfnIdentityPoolRoleAttachment(this,
             `${props.id}IdentityPoolRoleAttachement`, {
                 identityPoolId: props.identityPoolId,
                 roles: {

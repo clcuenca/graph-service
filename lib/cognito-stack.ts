@@ -3,13 +3,11 @@
  * @version 0.9.0
  */
 
-import { CfnIdentityPool, CfnIdentityPoolRoleAttachment,
-    UserPool, UserPoolClient, UserPoolIdentityProviderAmazon, UserPoolTriggers, UserPoolOperation } from 'aws-cdk-lib/aws-cognito'
-import {Duration, Stack} from 'aws-cdk-lib'
+import { CfnIdentityPool, UserPool, UserPoolClient, UserPoolIdentityProviderAmazon } from 'aws-cdk-lib/aws-cognito'
+import { Duration, Stack } from 'aws-cdk-lib'
 import { Construct } from 'constructs'
-import { Role } from 'aws-cdk-lib/aws-iam'
-import {AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId} from "aws-cdk-lib/custom-resources";
-import {RetentionDays} from "aws-cdk-lib/aws-logs";
+import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from "aws-cdk-lib/custom-resources";
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 
 /// -----------------
 /// CognitoStackProps
@@ -101,7 +99,7 @@ export class CognitoStack extends Stack {
 
         this.userPool.addDomain(`${props.id}${props.prefix}Domain`, {
             cognitoDomain: {
-                domainPrefix: props.prefix
+                domainPrefix: `${props.id.toLowerCase()}-${props.prefix}`
             }
         });
 
