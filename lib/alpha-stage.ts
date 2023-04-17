@@ -18,6 +18,7 @@ import { GrantBucketPutPolicyStatement } from "./grant-bucket-put-policy-stateme
 import { GrantTableReadWritePolicyStatement } from "./grant-table-read-write-policy-statement";
 import {HostedZoneStack} from "./hosted-zone-stack";
 import {CertificateStack} from "./certificate-stack";
+import {CognitoStack} from "./cognito-stack";
 
 /// -----------------
 /// Alpha Stage Props
@@ -61,6 +62,7 @@ export class AlphaStage extends Stage {
     private readonly ingestionInstanceStack:        InstanceStack       ;
     private readonly opensearchHostedZoneStack:     HostedZoneStack     ;
     private readonly opensearchCertificateStack:    CertificateStack    ;
+    private readonly opensearchCognitoStack:        CognitoStack        ;
 
     /// -----------
     /// Constructor
@@ -70,6 +72,13 @@ export class AlphaStage extends Stage {
                 account:        props.account,
                 region:         props.region
             }});
+
+        this.opensearchCognitoStack = new CognitoStack(this, {
+            account:    props.account,
+            region:     props.region,
+            id:         `${props.appName}FederatedCognito`,
+            stackId:    `${props.appName}CognitoStack`
+        });
 
         this.opensearchHostedZoneStack = new HostedZoneStack(this, {
             account:    props.account,
