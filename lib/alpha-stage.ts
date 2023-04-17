@@ -77,7 +77,7 @@ export class AlphaStage extends Stage {
             account:    props.account,
             region:     props.region,
             id:         `${props.appName}FederatedCognito`,
-            stackId:    `${props.appName}CognitoStack`
+            stackId:    `${props.appName}FederatedCognitoStack`
         });
 
         this.opensearchHostedZoneStack = new HostedZoneStack(this, {
