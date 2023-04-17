@@ -22,7 +22,9 @@ export class OpensearchCognitoAccessRole extends Role {
     public constructor(scope: Construct, props: OpensearchCognitoAccessRoleProps) {
         super(scope, props.id, {
             // Or es.amazonaws.com?
-            assumedBy: new ServicePrincipal('opensearchservice.amazonaws.com')
+            assumedBy: new ServicePrincipal('opensearchservice.amazonaws.com'),
+            // Attach the Managed Role; necessary for OpenSearch to communicate with Cognito
+            managedPolicies:    [ManagedPolicy.fromAwsManagedPolicyName('AmazonOpenSearchServiceCognitoAccess')]
         });
 
         // Necessary Trust Policy; The wildcard is needed per the doc? (Need to find this)
@@ -32,12 +34,6 @@ export class OpensearchCognitoAccessRole extends Role {
             resources:  props.arns
         }));
 
-        // Attach the Managed Role; necessary for OpenSearch to communicate with Cognito
-        this.addManagedPolicy(
-            ManagedPolicy.fromAwsManagedPolicyName('AmazonOpenSearchServiceCognitoAccess')
-        );
-
     }
-
 
 }

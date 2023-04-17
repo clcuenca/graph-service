@@ -22,6 +22,7 @@ import {CognitoStack} from "./cognito-stack";
 import {OpenSearchStack} from "./opensearch-stack";
 import {HostedZone} from "aws-cdk-lib/aws-route53";
 import {Certificate} from "aws-cdk-lib/aws-certificatemanager";
+import {OpenSearchCognitoStack} from "./opensearch-cognito";
 
 /// -----------------
 /// Alpha Stage Props
@@ -53,20 +54,17 @@ export class AlphaStage extends Stage {
     /// ---------------
     /// Private Members
 
-    private readonly datasetsBucket:                S3Stack             ;
-    private readonly ingestionScriptsBucket:        S3Stack             ;
-    private readonly mlScriptsBucket:               S3Stack             ;
-    private readonly mlDatasetsBucket:              S3Stack             ;
-    private readonly mlModelsBucket:                S3Stack             ;
-    private readonly modelsTableStack:              DynamoDBStack       ;
-    private readonly ingestionTableStack:           DynamoDBStack       ;
-    private readonly trainingSSMDocumentStack:      SSMDocumentStack    ;
-    private readonly mlTrainingInstanceStack:       InstanceStack       ;
-    private readonly ingestionInstanceStack:        InstanceStack       ;
-    private readonly opensearchHostedZoneStack:     HostedZoneStack     ;
-    private readonly opensearchCertificateStack:    CertificateStack    ;
-    private readonly opensearchCognitoStack:        CognitoStack        ;
-    private readonly opensearchStack:               OpenSearchStack     ;
+    private readonly datasetsBucket:                S3Stack                 ;
+    private readonly ingestionScriptsBucket:        S3Stack                 ;
+    private readonly mlScriptsBucket:               S3Stack                 ;
+    private readonly mlDatasetsBucket:              S3Stack                 ;
+    private readonly mlModelsBucket:                S3Stack                 ;
+    private readonly modelsTableStack:              DynamoDBStack           ;
+    private readonly ingestionTableStack:           DynamoDBStack           ;
+    private readonly trainingSSMDocumentStack:      SSMDocumentStack        ;
+    private readonly mlTrainingInstanceStack:       InstanceStack           ;
+    private readonly ingestionInstanceStack:        InstanceStack           ;
+    private readonly opensearchStack:               OpenSearchCognitoStack  ;
 
     /// -----------
     /// Constructor
@@ -77,42 +75,12 @@ export class AlphaStage extends Stage {
                 region:         props.region
             }});
 
-        this.opensearchHostedZoneStack = new HostedZoneStack(this, {
-            account:    props.account,
-            region:     props.region,
-            stackId:    `${props.appName}HostedZoneStack`,
-            id:         `${props.appName}HostedZone`,
-            domainName: props.opensearchDomain
-        });
-
-        this.opensearchCertificateStack = new CertificateStack(this, {
-            account:    props.account,
-            region:     props.region,
-            stackId:    `${props.appName}CertificateStack`,
-            id:         `${props.appName}Certificate`,
-            domain:     props.opensearchDomain,
-            hostedZone: this.opensearchHostedZoneStack.hostedZone
-        });
-
-        this.opensearchCognitoStack = new CognitoStack(this, {
-            account:    props.account,
-            region:     props.region,
-            id:         `${props.appName}FederatedCognito`,
-            stackId:    `${props.appName}FederatedCognitoStack`,
-            prefix:     props.stageName.toLowerCase()
-        });
-
-        this.opensearchStack = new OpenSearchStack(this, {
+        this.opensearchStack = new OpenSearchCognitoStack(this, {
             account:                props.account,
             region:                 props.region,
-            id:                     `${props.appName}OpenSearchInstance`,
-            stackId:                `${props.appName}OpenSearchInstanceStack`,
-            domainName:             props.opensearchDomain,
-            identityPoolId:         this.opensearchCognitoStack.identityPoolId,
-            userPoolId:             this.opensearchCognitoStack.userPoolId,
-            identityProviderDomain: this.opensearchCognitoStack.identityProviderDomain,
-            hostedZone:             this.opensearchHostedZoneStack.hostedZone,
-            certificate:            this.opensearchCertificateStack.certificate
+            id:                     `${props.appName}OpenSearch`,
+            stackId:                `${props.appName}OpenSearchStack`,
+            domainName:             props.opensearchDomain
         });
 
         this.datasetsBucket = new S3Stack(this, {
