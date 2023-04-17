@@ -18,7 +18,8 @@ export interface CognitoStackProps {
     account:                        string,
     region:                         string,
     id:                             string,
-    stackId:                        string
+    stackId:                        string,
+    prefix:                         string
 }
 
 /// ----------------------------------
@@ -96,6 +97,12 @@ export class CognitoStack extends Stack {
 
         this.userPool = new UserPool(this, `${props.id}UserPool`, {
             selfSignUpEnabled:          true,
+        });
+
+        this.userPool.addDomain(`${props.id}${props.prefix}Domain`, {
+            cognitoDomain: {
+                domainPrefix: props.prefix
+            }
         });
 
         this.userPoolClient = new UserPoolClient(this, `${props.id}UserPoolClient`, {

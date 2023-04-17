@@ -108,16 +108,8 @@ export class OpenSearchStack extends Stack {
                         identityProvider:           props.identityProviderDomain,
                     },
                 },
+
         });
-
-    }
-
-    /// -------
-    /// Getters
-
-    public get domain() {
-
-        return this._domain;
 
     }
 
