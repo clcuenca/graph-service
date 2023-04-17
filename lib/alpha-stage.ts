@@ -17,6 +17,7 @@ import { GrantBucketReadPolicyStatement } from "./grant-bucket-read-policy-state
 import { GrantBucketPutPolicyStatement } from "./grant-bucket-put-policy-statement";
 import { GrantTableReadWritePolicyStatement } from "./grant-table-read-write-policy-statement";
 import {HostedZoneStack} from "./hosted-zone-stack";
+import {CertificateStack} from "./certificate-stack";
 
 /// -----------------
 /// Alpha Stage Props
@@ -59,6 +60,7 @@ export class AlphaStage extends Stage {
     private readonly mlTrainingInstanceStack:       InstanceStack       ;
     private readonly ingestionInstanceStack:        InstanceStack       ;
     private readonly opensearchHostedZoneStack:     HostedZoneStack     ;
+    private readonly opensearchCertificateStack:    CertificateStack    ;
 
     /// -----------
     /// Constructor
@@ -72,9 +74,18 @@ export class AlphaStage extends Stage {
         this.opensearchHostedZoneStack = new HostedZoneStack(this, {
             account:    props.account,
             region:     props.region,
-            id:         `${props.appName}HostedZoneStack`,
-            stackId:    `${props.appName}HostedZone`,
+            stackId:    `${props.appName}HostedZoneStack`,
+            id:         `${props.appName}HostedZone`,
             domainName: props.opensearchDomain
+        });
+
+        this.opensearchCertificateStack = new CertificateStack(this, {
+            account:    props.account,
+            region:     props.region,
+            stackId:    `${props.appName}CertificateStack`,
+            id:         `${props.appName}Certificate`,
+            domain:     props.opensearchDomain,
+            hostedZone: this.opensearchHostedZoneStack.hostedZone
         });
 
         this.datasetsBucket = new S3Stack(this, {
