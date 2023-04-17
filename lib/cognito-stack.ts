@@ -86,6 +86,7 @@ export class CognitoStack extends Stack {
     private readonly userPoolClient:                    UserPoolClient                  ;
     private readonly userPoolClientSecretRetriever:     UserPoolClientSecretRetriever   ;
     private readonly userPoolIdentityProviderAmazon:    UserPoolIdentityProviderAmazon  ;
+    private readonly _identityProviderDomain:           string                          ;
 
     constructor (scope: Construct, props: CognitoStackProps) {
         super(scope, props.stackId, { env: {
@@ -115,7 +116,7 @@ export class CognitoStack extends Stack {
             clientSecret:               this.userPoolClientSecretRetriever.clientSecret
         });
 
-        const identityProviderDomain = `cognito-idp.${Stack.of(this).region}.amazonaws.com/${this.userPool.userPoolId}:${this.userPoolClient.userPoolClientId}`
+        this._identityProviderDomain = `cognito-idp.${Stack.of(this).region}.amazonaws.com/${this.userPool.userPoolId}:${this.userPoolClient.userPoolClientId}`
 
         this.identityPool = new CfnIdentityPool(this, `${props.id}IdentityPool`, {
             allowUnauthenticatedIdentities: true,
@@ -125,44 +126,23 @@ export class CognitoStack extends Stack {
             }]
         });
 
-        //const authenticatedRole     = new Roles.Cognito.AuthenticatedRole(this, props.resourceArns, this.identityPool.ref).roleArn
-        //const unauthenticatedRole   = new Roles.Cognito.UnauthenticatedRole(this, props.resourceArns, this.identityPool.ref).roleArn
-
-        /*new CfnIdentityPoolRoleAttachment(
-            this,
-            `identity-pool-role-attachment`, {
-                identityPoolId: this.identityPool.ref,
-                roles: {
-                    authenticated:      authenticatedRole,
-                    unauthenticated:    unauthenticatedRole,
-                },
-                roleMappings: {
-                    mapping: {
-                        type: 'Token',
-                        ambiguousRoleResolution: 'AuthenticatedRole',
-                        identityProvider: identityProviderDomain,
-                    },
-                },
-            },
-        );
-
-        this.userPool.addTrigger(UserPoolOperation.PRE_SIGN_UP, new Function(this, `${props.userPoolId}AutoVerifyLambda`, {
-            runtime: Runtime.PYTHON_3_9,
-            handler: 'cognito_pre_sign_up.handler',
-            code:    Code.fromAsset('cognito_pre_sign_up.zip')
-        }));*/
-
     }
 
-    get userPoolId() {
+    get identityProviderDomain() {
 
-        return this.userPool.userPoolId;
+        return this._identityProviderDomain;
 
     }
 
     get identityPoolId() {
 
         return this.identityPool.ref;
+
+    }
+
+    get userPoolId() {
+
+        return this.userPool.userPoolId;
 
     }
 

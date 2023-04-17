@@ -19,6 +19,9 @@ import { GrantTableReadWritePolicyStatement } from "./grant-table-read-write-pol
 import {HostedZoneStack} from "./hosted-zone-stack";
 import {CertificateStack} from "./certificate-stack";
 import {CognitoStack} from "./cognito-stack";
+import {OpenSearchStack} from "./opensearch-stack";
+import {HostedZone} from "aws-cdk-lib/aws-route53";
+import {Certificate} from "aws-cdk-lib/aws-certificatemanager";
 
 /// -----------------
 /// Alpha Stage Props
@@ -63,6 +66,7 @@ export class AlphaStage extends Stage {
     private readonly opensearchHostedZoneStack:     HostedZoneStack     ;
     private readonly opensearchCertificateStack:    CertificateStack    ;
     private readonly opensearchCognitoStack:        CognitoStack        ;
+    private readonly opensearchStack:               OpenSearchStack     ;
 
     /// -----------
     /// Constructor
@@ -72,13 +76,6 @@ export class AlphaStage extends Stage {
                 account:        props.account,
                 region:         props.region
             }});
-
-        this.opensearchCognitoStack = new CognitoStack(this, {
-            account:    props.account,
-            region:     props.region,
-            id:         `${props.appName}FederatedCognito`,
-            stackId:    `${props.appName}FederatedCognitoStack`
-        });
 
         this.opensearchHostedZoneStack = new HostedZoneStack(this, {
             account:    props.account,
@@ -95,6 +92,26 @@ export class AlphaStage extends Stage {
             id:         `${props.appName}Certificate`,
             domain:     props.opensearchDomain,
             hostedZone: this.opensearchHostedZoneStack.hostedZone
+        });
+
+        this.opensearchCognitoStack = new CognitoStack(this, {
+            account:    props.account,
+            region:     props.region,
+            id:         `${props.appName}FederatedCognito`,
+            stackId:    `${props.appName}FederatedCognitoStack`
+        });
+
+        this.opensearchStack = new OpenSearchStack(this, {
+            account:                props.account,
+            region:                 props.region,
+            id:                     `${props.appName}OpenSearchInstance`,
+            stackId:                `${props.appName}OpenSearchInstanceStack`,
+            identityPoolId:         this.opensearchCognitoStack.identityPoolId,
+            userPoolId:             this.opensearchCognitoStack.userPoolId,
+            domainName:             props.opensearchDomain,
+            identityProviderDomain: this.opensearchCognitoStack.identityProviderDomain,
+            hostedZone:             this.opensearchHostedZoneStack.hostedZone,
+            certificate:            this.opensearchCertificateStack.certificate
         });
 
         this.datasetsBucket = new S3Stack(this, {
