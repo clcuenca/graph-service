@@ -16,7 +16,7 @@ from mltrainer import MLTrainer
 from spacy_trainer import SpacyTextCatTrainer
 
 def column_map(value) -> dict:
-    return {'cats': {'POSITIVE': value == 'hateful', 'NEGATIVE': value == 'non-hateful'}}
+    return {'cats': {'POSITIVE': value == 'hateful', 'NEGATIVE': value != 'non-hateful'}}
 
 columns = {'test_case': None, 'label_gold': column_map}
 

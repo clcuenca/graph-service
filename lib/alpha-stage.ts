@@ -107,9 +107,9 @@ export class AlphaStage extends Stage {
             region:                 props.region,
             id:                     `${props.appName}OpenSearchInstance`,
             stackId:                `${props.appName}OpenSearchInstanceStack`,
+            domainName:             props.opensearchDomain,
             identityPoolId:         this.opensearchCognitoStack.identityPoolId,
             userPoolId:             this.opensearchCognitoStack.userPoolId,
-            domainName:             props.opensearchDomain,
             identityProviderDomain: this.opensearchCognitoStack.identityProviderDomain,
             hostedZone:             this.opensearchHostedZoneStack.hostedZone,
             certificate:            this.opensearchCertificateStack.certificate
