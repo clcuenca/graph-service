@@ -191,7 +191,7 @@ export class OpenSearchCognitoStack extends Stack {
                 role:               openSearchAccessRole
             },
             customEndpoint: {
-                domainName:         props.domainName,
+                domainName:         `${props.stage}.${props.domainName}`,
                 hostedZone:         this._hostedZone,
                 certificate:        this._certificate
             }
