@@ -198,7 +198,7 @@ export class OpenSearchCognitoStack extends Stack {
         });
 
         this._cnameRecord = new CnameRecord(this, `${props.id}CNAMERecord`, {
-            recordName: `${props.stage}.${props.domainName.toLowerCase()}`,
+            recordName: `alpha.${props.domainName.toLowerCase()}`,
             zone:       this._hostedZone,
             domainName: this._domain.domainEndpoint
         });
