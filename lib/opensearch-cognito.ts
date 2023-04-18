@@ -160,7 +160,7 @@ export class OpenSearchCognitoStack extends Stack {
                 clientId:               this.userPoolClient.userPoolClientId,
                 providerName:           this._userPool.userPoolProviderName
             }]
-        });//
+        });
 
         this._hostedZone = HostedZone.fromLookup(this, `${props.id}HostedZone`, {
             domainName: props.domainName
