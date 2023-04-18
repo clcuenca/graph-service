@@ -195,13 +195,13 @@ export class OpenSearchCognitoStack extends Stack {
                 hostedZone:         this._hostedZone,
                 certificate:        this._certificate
             }
-        });
+        });// Test
 
-        this._cnameRecord = new CnameRecord(this, `${props.id}CNAMERecord`, {
-            recordName: `alpha.${props.domainName.toLowerCase()}`,
-            zone:       this._hostedZone,
-            domainName: this._domain.domainEndpoint
-        });
+        //this._cnameRecord = new CnameRecord(this, `${props.id}CNAMERecord`, {
+        //    recordName: `alpha.${props.domainName.toLowerCase()}`,
+        //    zone:       this._hostedZone,
+        //    domainName: this._domain.domainEndpoint
+        //});
 
         this._cognitoAuthenticatedRole = new CognitoAuthenticatedRole(this, {
             id:             `${props.id}CognitoAuthenticatedRole`,
