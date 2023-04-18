@@ -188,6 +188,28 @@ export module Constants {
             /// -----------
             /// ML Training
 
+            export module FrontEnd {
+
+                export const Type = InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MICRO)
+
+                export const Image = new AmazonLinuxImage({
+                    generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
+                });
+
+                export const KeyPairName = 'graph-service-front-end';
+
+                export const Startup = [
+                    'sudo apt update',
+                    'sudo apt install nginx -y',
+                    'sudo apt-get install curl',
+                    'curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -'
+                ]
+
+            }
+
+            /// -----------
+            /// ML Training
+
             export module MLTraining {
 
                 export const Type = InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MICRO)
