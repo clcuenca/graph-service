@@ -1,8 +1,8 @@
-# Welcome to your CDK TypeScript project
+# Graph Service
 
-This is a blank project for CDK development with TypeScript.
+## System Architecture
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+![alt text](system_architecture.svg)
 
 ## Useful commands
 

@@ -7,7 +7,7 @@
 import {Construct} from 'constructs'
 import {Duration, RemovalPolicy, Stack} from 'aws-cdk-lib'
 import {Domain, EngineVersion} from 'aws-cdk-lib/aws-opensearchservice'
-import {CnameRecord, HostedZone} from "aws-cdk-lib/aws-route53";
+import {HostedZone} from "aws-cdk-lib/aws-route53";
 import {Certificate, CertificateValidation} from "aws-cdk-lib/aws-certificatemanager";
 import {OpensearchCognitoAccessRole} from "./opensearch-cognito-access-role";
 import {CognitoAuthenticatedRole} from "./cognito-authenticated-role";
@@ -101,7 +101,6 @@ export class OpenSearchCognitoStack extends Stack {
     private readonly _hostedZone:                       HostedZone                      ;
     private readonly _certificate:                      Certificate                     ;
     private readonly _domain:                           Domain                          ;
-    private readonly _cnameRecord:                      CnameRecord                     ;
     private readonly _cognitoAuthenticatedRole:         CognitoAuthenticatedRole        ;
     private readonly _cognitoUnauthenticatedRole:       CognitoUnauthenticatedRole      ;
     private readonly _identityPoolRoleAttachment:       CfnIdentityPoolRoleAttachment   ;
@@ -134,7 +133,7 @@ export class OpenSearchCognitoStack extends Stack {
             }
         });
 
-        this.userPoolClient = new UserPoolClient(this, `${props.id}UserPoolClient`, {
+        this.userPoolClient                = new UserPoolClient(this, `${props.id}UserPoolClient`, {
             userPool:                   this._userPool,
             generateSecret:             true
         });
@@ -195,13 +194,7 @@ export class OpenSearchCognitoStack extends Stack {
                 hostedZone:         this._hostedZone,
                 certificate:        this._certificate
             }
-        });// Test
-
-        //this._cnameRecord = new CnameRecord(this, `${props.id}CNAMERecord`, {
-        //    recordName: `alpha.${props.domainName.toLowerCase()}`,
-        //    zone:       this._hostedZone,
-        //    domainName: this._domain.domainEndpoint
-        //});
+        });
 
         this._cognitoAuthenticatedRole = new CognitoAuthenticatedRole(this, {
             id:             `${props.id}CognitoAuthenticatedRole`,
