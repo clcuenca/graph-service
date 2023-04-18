@@ -354,7 +354,7 @@ export module Constants {
 
     export module OpenSearch {
 
-        export const Domain = `lowerbound.app`  ;
+        export const Domain = `lowerbound.dev`  ;
 
     }
 
