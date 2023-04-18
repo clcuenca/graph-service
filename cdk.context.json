@@ -34,5 +34,9 @@
   "hosted-zone:account=669680791620:domainName=lowerbound.app:region=us-east-1": {
     "Id": "/hostedzone/Z0934580ETKNXJAO1602",
     "Name": "lowerbound.app."
+  },
+  "hosted-zone:account=669680791620:domainName=lowerbound.dev:region=us-east-1": {
+    "Id": "/hostedzone/Z0424655NMSC11AWOWSZ",
+    "Name": "lowerbound.dev."
   }
 }
