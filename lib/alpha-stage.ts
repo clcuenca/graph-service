@@ -200,13 +200,15 @@ export class AlphaStage extends Stage {
         this.algorithmicInstanceStack = new InstanceStack(this, {
             account:            props.account,
             region:             props.region,
-            stackId:            `${props.appName}IngestionInstanceStack`,
-            id:                 `${props.appName}IngestionInstance`,
+            stackId:            `${props.appName}AlgorithmicInstanceStack`,
+            id:                 `${props.appName}AlgorthmicInstance`,
             instanceType:       props.algorithmicInstanceType,
             machineImage:       props.algorithmicMachineImage,
             keyname:            props.algorithmicKeyPairName,
             startup:            props.algorithmicStartup,
-            policyStatements:   []
+            policyStatements:   [                new GrantBucketReadPolicyStatement({
+                bucket: this.mlScriptsBucket.bucket
+            })]
         });
 
         this.trainingSSMDocumentStack = new SSMDocumentStack(this, {
