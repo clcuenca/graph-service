@@ -213,7 +213,7 @@ export class OpenSearchCognitoStack extends Stack {
                 identityPoolId:         this.identityPool.ref,
                 roles: {
                     authenticated:      this._cognitoAuthenticatedRole.roleArn,
-                    unauthenticated:    this._cognitoUnauthenticatedRole.roleArn
+                    unauthenticated:    this._cognitoAuthenticatedRole.roleArn
                 },
                 roleMappings: {
                     mapping: {
