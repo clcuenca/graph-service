@@ -185,8 +185,8 @@ export module Constants {
 
         export module Instance {
 
-            /// -----------
-            /// ML Training
+            /// --------
+            /// FrontEnd
 
             export module FrontEnd {
 
@@ -366,6 +366,91 @@ export module Constants {
                 }
 
             }
+
+            /// -----------
+            /// Algorithmic
+
+            export module Algorithmic {
+
+                export const Type = InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MICRO)
+
+                export const Image = new AmazonLinuxImage({
+                    generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
+                });
+
+                export const KeyPairName = 'graph-service-algorithmic-key';
+
+                export const Startup = []
+
+                export module Document {
+
+                    export const Type           = 'Command'                 ;
+                    export const TargetType     = '/AWS::EC2::Instance'     ;
+                    export const Name           = 'IngestionRunDocument5'   ;
+                    export const UpdateMethod   = 'Replace'                 ;
+                    export const Scripts        = 'algorithmicscripts.zip'  ;
+                    export const Content = {
+                        schemaVersion: '2.2',
+                        parameters: {
+                            script: {
+                                type: 'String'
+                            },
+                            dataset: {
+                                type: 'String'
+                            },
+                            model_name: {
+                                type: 'String'
+                            },
+                            model: {
+                                type: 'String',
+                                default: 'en_core_web_lg',
+                                allowedValues: [
+                                    'en_core_web_sm',
+                                    'en_core_web_md',
+                                    'en_core_web_lg',
+                                    'en_core_web_trf'
+                                ]
+                            },
+                            endpoint: {
+                                type: 'String'
+                            },
+                            region: {
+                                type: 'String',
+                                default: Region
+                            }
+                        },
+                        mainSteps: [
+                            {
+                                action: 'aws:runShellScript',
+                                name:   'RetrieveScripts',
+                                inputs: {
+                                    runCommand: [
+                                        `rm -f *.py && rm -f .*.py`,
+                                        `aws s3api get-object --bucket ${S3.Bucket.IngestionScripts.Name} --key ${Scripts} ${Scripts}`,
+                                        `unzip -j ${Scripts}`,
+                                        `rm ${Scripts}`,
+                                        `python3 {{ script }} ` +
+                                        `--datasetsbucket ${S3.Bucket.Datasets.Name}` +
+                                        `--dataset {{ dataset }} `+
+                                        `--dataset_model {{ dataset_model }} ` +
+                                        `--modelsbucket ${S3.Bucket.MLModels.Name} ` +
+                                        `--model {{ model }} ` +
+                                        `--endpoint {{ endpoint }} ` +
+                                        `--region {{ region }}`
+                                    ]
+
+                                }
+
+                            }
+
+                        ]
+
+                    }
+
+                }
+
+            }
+
 
         }
 

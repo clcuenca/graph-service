@@ -28,22 +28,26 @@ import {OpenSearchCognitoStack} from "./opensearch-cognito";
 /// Alpha Stage Props
 
 export interface AlphaStageProps {
-    account:                string,
-    region:                 string,
-    stageId:                string,
-    stageName:              string,
-    appName:                string,
-    ec2ServicePrincipal:    string,
-    mlTrainingInstanceType: InstanceType,
-    mlTrainingMachineImage: IMachineImage,
-    mlTrainingKeyPairName:  string,
-    mlTrainingStartup:      string[],
-    ingestionInstanceType:  InstanceType,
-    ingestionMachineImage:  IMachineImage,
-    ingestionKeyPairName:   string,
-    ingestionStartup:       string[],
-    trainingSSMDocument:    any,
-    opensearchDomain:       string
+    account:                    string,
+    region:                     string,
+    stageId:                    string,
+    stageName:                  string,
+    appName:                    string,
+    ec2ServicePrincipal:        string,
+    mlTrainingInstanceType:     InstanceType,
+    mlTrainingMachineImage:     IMachineImage,
+    mlTrainingKeyPairName:      string,
+    mlTrainingStartup:          string[],
+    ingestionInstanceType:      InstanceType,
+    ingestionMachineImage:      IMachineImage,
+    ingestionKeyPairName:       string,
+    ingestionStartup:           string[],
+    algorithmicInstanceType:    InstanceType,
+    algorithmicMachineImage:    IMachineImage,
+    algorithmicKeyPairName:     string,
+    algorithmicStartup:         string[],
+    trainingSSMDocument:        any,
+    opensearchDomain:           string
 }
 
 /// --------------------------
@@ -64,6 +68,7 @@ export class AlphaStage extends Stage {
     private readonly trainingSSMDocumentStack:      SSMDocumentStack        ;
     private readonly mlTrainingInstanceStack:       InstanceStack           ;
     private readonly ingestionInstanceStack:        InstanceStack           ;
+    private readonly algorithmicInstanceStack:      InstanceStack           ;
     private readonly opensearchStack:               OpenSearchCognitoStack  ;
 
     /// -----------
@@ -190,6 +195,18 @@ export class AlphaStage extends Stage {
                     table:  this.ingestionTableStack.table
                 })
             ]
+        });
+
+        this.algorithmicInstanceStack = new InstanceStack(this, {
+            account:            props.account,
+            region:             props.region,
+            stackId:            `${props.appName}IngestionInstanceStack`,
+            id:                 `${props.appName}IngestionInstance`,
+            instanceType:       props.algorithmicInstanceType,
+            machineImage:       props.algorithmicMachineImage,
+            keyname:            props.algorithmicKeyPairName,
+            startup:            props.algorithmicStartup,
+            policyStatements:   []
         });
 
         this.trainingSSMDocumentStack = new SSMDocumentStack(this, {
