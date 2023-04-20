@@ -6,9 +6,15 @@
 
 import { Construct } from 'constructs'
 import { Stage, Stack } from 'aws-cdk-lib'
-import { CodePipeline, CodePipelineSource, ShellStep } from 'aws-cdk-lib/pipelines'
-import { CodeCommitTrigger } from 'aws-cdk-lib/aws-codepipeline-actions'
+import {CodePipeline, CodePipelineSource, FileSet, FileSetLocation, ShellStep} from 'aws-cdk-lib/pipelines'
+import {CodeCommitTrigger, CodeDeployServerDeployAction} from 'aws-cdk-lib/aws-codepipeline-actions'
 import { Repository } from 'aws-cdk-lib/aws-codecommit'
+import {
+    InstanceTagSet,
+    ServerApplication,
+    ServerDeploymentConfig,
+    ServerDeploymentGroup
+} from "aws-cdk-lib/aws-codedeploy";
 
 /// ----------
 /// Properties
@@ -24,7 +30,12 @@ export interface PipelineStackProps {
     commands:           string[],
     trigger:            CodeCommitTrigger,
     selfMutation:       boolean,
-    stages:             Stage[]
+    stages:             Stage[],
+}
+
+export interface Application {
+    fileSet:    FileSet,
+    directory:  string,
 }
 
 /// --------------------
@@ -35,8 +46,8 @@ export class PipelineStack extends Stack {
     /// ---------------
     /// Private Members
 
-    private readonly repository:   Repository      ;
-    private readonly pipeline:     CodePipeline    ;
+    private readonly repository:                Repository                      ;
+    private readonly pipeline:                  CodePipeline                    ;
 
     /// -----------
     /// Constructor

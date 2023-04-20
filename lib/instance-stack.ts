@@ -10,12 +10,11 @@ import {
     InstanceType,
     IMachineImage,
     Vpc,
-    CfnInstance,
     SecurityGroup,
     Port,
     Peer
 } from 'aws-cdk-lib/aws-ec2'
-import {ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal, User} from 'aws-cdk-lib/aws-iam'
+import {ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal} from 'aws-cdk-lib/aws-iam'
 
 /// ----------
 /// Properties
@@ -77,7 +76,8 @@ export class InstanceStack extends Stack {
                     })
                 },
                 managedPolicies: [
-                    ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore')
+                    ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
+                    ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2RoleforAWSCodeDeploy')
                 ]
             })
         });

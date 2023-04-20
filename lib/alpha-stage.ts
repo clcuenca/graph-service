@@ -23,6 +23,7 @@ import {OpenSearchStack} from "./opensearch-stack";
 import {HostedZone} from "aws-cdk-lib/aws-route53";
 import {Certificate} from "aws-cdk-lib/aws-certificatemanager";
 import {OpenSearchCognitoStack} from "./opensearch-cognito";
+import {ApplicationInstanceStack} from "./application-instance-stack";
 
 /// -----------------
 /// Alpha Stage Props
@@ -70,6 +71,7 @@ export class AlphaStage extends Stage {
     private readonly ingestionInstanceStack:        InstanceStack           ;
     private readonly algorithmicInstanceStack:      InstanceStack           ;
     private readonly opensearchStack:               OpenSearchCognitoStack  ;
+    private readonly testInstanceStack:             ApplicationInstanceStack    ;
 
     /// -----------
     /// Constructor
