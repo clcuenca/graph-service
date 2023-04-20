@@ -243,7 +243,6 @@ class OpenSearchWorker:
 
         current_file_read = 0
         lines_read = 0
-        previous_progress = 0
         terminate = False
 
         # Iterate while we have a language
@@ -275,6 +274,7 @@ class OpenSearchWorker:
 
                 # Otherwise
                 else:
+
                     terminate = True
 
             # Finally
@@ -285,13 +285,8 @@ class OpenSearchWorker:
             # Break condition
             if terminate: break
 
-            # If we should display the progress
-            if progress - previous_progress > 1:
-                # Print out the progress
-                OpenSearchWorker.Log.Info(f'Thread {self.count} - Lines Read: {lines_read}, {progress:.1f}%')
-
-                # Set the previous progress
-                previous_progress = progress
+            # Print out the progress
+            OpenSearchWorker.Log.Info(f'File: {self.file} - Thread {self.count} - Lines Read: {lines_read}, {progress:.1f}%')
 
             # Initialize the entry
             entry = {key: value for key, value in json.loads(line).items() if key in retain_keys}
