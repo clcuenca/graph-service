@@ -249,7 +249,7 @@ class OpenSearchWorker:
         import psutil
 
         p = psutil.Process(os.getpid())
-        p.cpu_affinity(self.count % 20)
+        p.cpu_affinity([self.count % 20])
 
         # Iterate while we have a language
         while self.language is not None:
