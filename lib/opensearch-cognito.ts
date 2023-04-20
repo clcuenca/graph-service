@@ -14,11 +14,11 @@ import {CognitoAuthenticatedRole} from "./cognito-authenticated-role";
 import {CognitoUnauthenticatedRole} from "./cognito-unauthenticated-role";
 import {
     CfnIdentityPool,
-    CfnIdentityPoolRoleAttachment,
+    CfnIdentityPoolRoleAttachment, OAuthScope,
     UserPool,
     UserPoolClient,
     UserPoolDomain,
-    UserPoolIdentityProviderAmazon
+    UserPoolIdentityProviderAmazon, UserPoolResourceServer
 } from "aws-cdk-lib/aws-cognito";
 import {AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId} from "aws-cdk-lib/custom-resources";
 import {RetentionDays} from "aws-cdk-lib/aws-logs";
@@ -133,9 +133,34 @@ export class OpenSearchCognitoStack extends Stack {
             }
         });
 
-        this.userPoolClient                = new UserPoolClient(this, `${props.id}UserPoolClient`, {
+        const resourceServerIdentifier = `https://resourceserver.unlv789`
+
+        const searchResource = new UserPoolResourceServer(this, `${props.id}ResourceServer`, {
+            identifier: resourceServerIdentifier,
+            userPoolResourceServerName: 'ES DR demo resource server',
+            userPool: this._userPool,
+            scopes: [
+                {
+                    scopeName: 'data.read',
+                    scopeDescription: 'Read access scope'
+                },
+                {
+                    scopeName: 'data.write',
+                    scopeDescription: 'Read-write access scope'
+                }
+            ]
+        });
+
+        this.userPoolClient = new UserPoolClient(this, `${props.id}UserPoolClient`, {
             userPool:                   this._userPool,
-            generateSecret:             true
+            accessTokenValidity:        Duration.hours(24),
+            generateSecret:             true,
+            oAuth: {
+                flows: {
+                    clientCredentials: true
+                },
+                scopes: [OAuthScope.custom(`${resourceServerIdentifier}/data.write`)]
+            }
         });
 
         this.userPoolClientSecretRetriever = new UserPoolClientSecretRetriever(this, {
