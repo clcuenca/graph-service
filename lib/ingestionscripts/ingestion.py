@@ -224,7 +224,7 @@ class OpenSearchWorker:
     ## ------------
     ## Constructors
 
-    def __init__(self, config, model, model_name, endpoint='', region=''):
+    def __init__(self, config, model, model_name, endpoint='', region='', current_file_size=0):
 
         # If we have a valid model name and bucket
         if config is not None and model is not None:
@@ -238,17 +238,15 @@ class OpenSearchWorker:
 
             # Set the count
             self.count = OpenSearchWorker.Count
+            self.current_file_size = current_file_size
 
             # Increment the count
             OpenSearchWorker.Count += 1
 
     def ingest_local(self, retain_keys, language_key):
 
-        global current_file
-        global current_file_read
-        global current_file_size
-        global current_file_lock
-        global lines_read
+        current_file_read   = 0
+        lines_read          = 0
 
         import time
 
@@ -268,25 +266,19 @@ class OpenSearchWorker:
             try:
 
                 # Check if the file has finished
-                if not current_file_read >= current_file_size:
+                if not current_file_read >= self.current_file_size:
 
-                    # Yield if we have to
-                    #while current_file_lock.locked(): time.sleep(0)
+                    # Retrieve the line
+                    line = current_file.readline()
 
-                    # Acquire/release
-                    with current_file_lock:
+                    # Update the amount of read lines
+                    lines_read += 1
 
-                        # Retrieve the line
-                        line = current_file.readline()
+                    # Update the amount read
+                    current_file_read += len(line) + 1
 
-                        # Update the amount of read lines
-                        lines_read += 1
-
-                        # Update the amount read
-                        current_file_read += len(line) + 1
-
-                        # Calculate the progress
-                        progress = (current_file_read / current_file_size)*100
+                    # Calculate the progress
+                    progress = (current_file_read / self.current_file_size)*100
 
                 # Otherwise
                 else: terminate = True
@@ -490,12 +482,12 @@ class OpenSearchWorker:
 
             if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Skipping entry')
 
-def initialize_workers(arguments, config, model, n_threads=1):
+def initialize_workers(arguments, config, model, n_threads=1, current_file_size=0):
 
     # Log
     if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Initializing workers: {n_threads}')
 
-    workers         = [OpenSearchWorker(config, model, arguments['model_name'], 'alpha.lowerbound.dev', 'us-east-1') for index in range(n_threads)]
+    workers         = [OpenSearchWorker(config, model, arguments['model_name'], 'alpha.lowerbound.dev', 'us-east-1', current_file_size) for index in range(n_threads)]
     language_key    = 'body'
 
     # Initialize the threads
@@ -578,14 +570,14 @@ def ingest_local_files(arguments, n_threads, path):
     global current_file
     global current_file_lock
     global current_file_read
-    global current_file_size
+    current_file_size = 0
     global lines_read
 
     # Retrieve each file
     files       = [os.path.join(path, file) for file in os.listdir(path) if os.path.isfile(os.path.join(path, file))]
     pool        = []
     file_chunk  = []
-    chunks      = 10
+    chunks      = 40
     count       = 0
 
     # Iterate through the files
@@ -607,13 +599,16 @@ def ingest_local_files(arguments, n_threads, path):
             file_chunk.append(file)
 
         # Initialize the threads
-        threads = initialize_workers(arguments, config, model, n_threads)
+        threads = initialize_workers(arguments, config, model, n_threads, current_file_size)
 
-        # Start the threads
-        [thread.start() for thread in threads]
+        # Iterate through the threads
+        for thread in threads:
 
-        # Add them to the pool
-        [pool.append(thread) for thread in threads]
+            # Start
+            thread.start()
+
+            # Append
+            pool.append(thread)
 
         # Increment the count
         count += 1
