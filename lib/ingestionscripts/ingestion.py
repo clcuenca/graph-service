@@ -8,7 +8,7 @@ import threading
 from log import Log
 from arguments import Arguments
 
-REQUIRED_ARGUMENTS  = ['datasetsbucket', 'dataset', 'modelsbucket', 'model_name']#, 'endpoint', 'region']
+REQUIRED_ARGUMENTS  = ['datasetsbucket', 'dataset', 'modelsbucket', 'model_name', 'threads']#, 'endpoint', 'region']
 # TODO: Make this into a parameter
 retain              = ['username',
                         'creator',
@@ -364,8 +364,6 @@ class OpenSearchWorker:
             # TODO: Shove into open search here
             self.client.index(index, id=f'{entry["creator"]}:{createdAt}', body=entry)
 
-
-
     def ingest(self, retain_keys, language_key):
 
         global current_file
@@ -505,7 +503,6 @@ def initialize_workers(arguments, config, model, n_threads=1):
     # Return the set of threads
     return threads
 
-
 def ingest_s3_files(arguments, n_threads):
 
     # Import the required modules
@@ -609,7 +606,7 @@ def ingest_local_files(arguments, n_threads, path):
 if __name__ == "__main__":
 
     # Initialize the log
-    OpenSearchWorker.Log    = log = Log()
+    OpenSearchWorker.Log = log = Log()
 
     # Consume the arguments
     arguments = Arguments(sys.argv)
@@ -623,4 +620,4 @@ if __name__ == "__main__":
             # Log the error and exit
             log.Error(f'Error: Required argument \'{required}\' not specified.')
 
-    ingest_local_files(arguments, 1, '/media/cuenca/data/parler_/parler_data/')
+    ingest_local_files(arguments, int(arguments['threads']), '/media/cuenca/data/parler_/parler_data/')
