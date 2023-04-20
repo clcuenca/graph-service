@@ -229,6 +229,9 @@ export class AlphaStage extends Stage {
             policyStatements:   [
                 new GrantTimeStreamDatabaseWritePolicyStatement({
                     database:   this.timestreamDatabaseStack.database
+                }),
+                new GrantBucketReadPolicyStatement({
+                    bucket:     this.algorithmicsBucket.bucket
                 })
             ]
         });
