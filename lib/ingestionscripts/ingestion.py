@@ -232,7 +232,7 @@ class OpenSearchWorker:
         if config is not None and model is not None:
 
             # Initialize the client
-            self.client = OpenSearchWorker.initialize_open_search_client('alpha.lowerbound.dev/', 'us-east-1')
+            self.client = OpenSearchWorker.initialize_open_search_client('alpha.lowerbound.dev', 'us-east-1')
 
             # Initialize the model
             self.language   = OpenSearchWorker.initialize_language_model(config, model)
