@@ -246,8 +246,6 @@ class OpenSearchWorker:
         previous_progress = 0
         terminate = False
 
-        if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Size: {self.current_file_size}')
-
         # Iterate while we have a language
         while self.language is not None:
 
@@ -265,7 +263,7 @@ class OpenSearchWorker:
 
                     # Retrieve the line
                     line = self.file.readline()
-                    print(f'File: {self.file} - Line: {line}')
+
                     # Update the amount of read lines
                     lines_read += 1
 
