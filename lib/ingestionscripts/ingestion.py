@@ -245,6 +245,11 @@ class OpenSearchWorker:
         lines_read = 0
         terminate = False
 
+        import os
+
+        p = psutil.Process(os.getpid())
+        p.cpu_affinity(self.count % 20)
+
         # Iterate while we have a language
         while self.language is not None:
 
@@ -544,7 +549,7 @@ def ingest_local_files(arguments, n_threads, path):
     # Retrieve each file
     files       = [os.path.join(path, file) for file in os.listdir(path) if os.path.isfile(os.path.join(path, file))]
     pool        = []
-    chunks      = 40
+    chunks      = 20
     count       = 0
     _read_file  = None
 
