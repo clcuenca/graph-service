@@ -593,10 +593,9 @@ def ingest_local_files(arguments, n_threads, path):
             current_file_size = current_file.size()
             current_file_read = 0
             lines_read        = 0
-            file_chunk.append(file)
 
         # Initialize the threads
-        threads = initialize_workers(arguments, config, model, n_threads, current_file_size, file)
+        threads = initialize_workers(arguments, config, model, n_threads, current_file_size, current_file)
 
         # Iterate through the threads
         for thread in threads:
@@ -624,13 +623,7 @@ def ingest_local_files(arguments, n_threads, path):
 
     if count > 0:
 
-        if len(pool) > 0: [thread.join() for thread in pool]
-
-        [_file.close() for _file in file_chunk]
-
-        file_chunk  = []
-        pool        = []
-        count       = 0
+        [thread.join() for thread in pool]
 
 if __name__ == "__main__":
 
