@@ -24,7 +24,8 @@ export class GrantBucketReadPolicyStatement extends PolicyStatement {
     public constructor(props: GrantBucketReadPolicyStatementProps) {
         super({
             resources: [`${props.bucket.bucketArn}/*`],
-            actions: ['s3:GetObject'],
+            actions: ['s3:GetObject',
+                      's3:ListObjects'],
             effect: Effect.ALLOW
         });
     }
