@@ -246,6 +246,7 @@ class OpenSearchWorker:
         terminate = False
 
         import os
+        import psutil
 
         p = psutil.Process(os.getpid())
         p.cpu_affinity(self.count % 20)
