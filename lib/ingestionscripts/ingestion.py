@@ -567,6 +567,8 @@ def ingest_local_files(arguments, n_threads, path):
             # Map the file onto memory
             _read_file = mmap.mmap(input.fileno(), 0)
 
+            if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'File: {file} - Size: {_read_file.size()}')
+
         # Initialize the threads
         threads = initialize_workers(arguments, config, model, n_threads, _read_file.size(), _read_file)
 
