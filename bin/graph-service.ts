@@ -1,12 +1,9 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
-import * as cdk from 'aws-cdk-lib';
-import { GraphServiceStack } from '../lib/graph-service-stack';
 import {PipelineStack} from "../lib/pipeline-stack";
 import {Constants} from "../lib/constants";
 import {AlphaStage} from "../lib/alpha-stage";
 import {App} from "aws-cdk-lib";
-import {IMachineImage, InstanceType} from "aws-cdk-lib/aws-ec2";
 
 const app = new App();
 

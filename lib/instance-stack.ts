@@ -76,8 +76,7 @@ export class InstanceStack extends Stack {
                     })
                 },
                 managedPolicies: [
-                    ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
-                    ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2RoleforAWSCodeDeploy')
+                    ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore')
                 ]
             })
         });
