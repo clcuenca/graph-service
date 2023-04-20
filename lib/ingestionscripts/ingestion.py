@@ -268,7 +268,7 @@ class OpenSearchWorker:
 
                     # Retrieve the line
                     line = self.file.readline()
-
+                    print(f'File: {self.file} - Line: {line}')
                     # Update the amount of read lines
                     lines_read += 1
 
