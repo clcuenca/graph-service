@@ -8,39 +8,33 @@ import threading
 from log import Log
 from arguments import Arguments
 
-REQUIRED_ARGUMENTS  = ['datasetsbucket', 'dataset', 'modelsbucket', 'model_name', 'threads']#, 'endpoint', 'region']
+REQUIRED_ARGUMENTS = ['datasetsbucket', 'dataset', 'modelsbucket', 'model_name', 'threads']  # , 'endpoint', 'region']
 # TODO: Make this into a parameter
-retain              = ['username',
-                        'creator',
-                        'parent',
-                        'createdAt',
-                        'createdAtformatted',
-                        'verified',
-                        'impressions',
-                        'reposts',
-                        'state',
-                        'followers',
-                        'following',
-                        'depth',
-                        'comments',
-                        'body',
-                        'bodywithurls',
-                        'datatype',
-                        'hashtags']
+retain = ['username',
+          'creator',
+          'parent',
+          'createdAt',
+          'createdAtformatted',
+          'verified',
+          'impressions',
+          'reposts',
+          'state',
+          'followers',
+          'following',
+          'depth',
+          'comments',
+          'body',
+          'bodywithurls',
+          'datatype',
+          'hashtags']
 
-current_file        = None
-current_file_read   = 0
-current_file_size   = 0
-current_file_lock   = threading.Lock()
-lines_read          = 0
 
 class OpenSearchWorker:
-
     ## -------------
     ## Static Fields
 
-    Log          = None
-    Count        = 0
+    Log = None
+    Count = 0
 
     ## --------------
     ## Static Methods
@@ -68,10 +62,10 @@ class OpenSearchWorker:
                        })
 
         # Bind the names
-        AWS4Auth                = sys.modules[__name__].AWS4Auth
-        OpenSearch              = sys.modules[__name__].OpenSearch
-        RequestsHttpConnection  = sys.modules[__name__].RequestsHttpConnection
-        Session                 = sys.modules[__name__].Session
+        AWS4Auth = sys.modules[__name__].AWS4Auth
+        OpenSearch = sys.modules[__name__].OpenSearch
+        RequestsHttpConnection = sys.modules[__name__].RequestsHttpConnection
+        Session = sys.modules[__name__].Session
 
         # Retrieve the credentials
         credentials = Session().get_credentials()
@@ -92,7 +86,8 @@ class OpenSearchWorker:
     def download_language_model(model_bucket, model_name):
 
         # Log
-        if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Downloading Language Model; Importing required modules')
+        if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(
+            f'Downloading Language Model; Importing required modules')
 
         # Import the required modules
         from import_modules import import_modules
@@ -124,24 +119,26 @@ class OpenSearchWorker:
         if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Modules loaded, binding names')
 
         # Initialize the names
-        get_lang_class  = sys.modules[__name__].get_lang_class
-        resource        = sys.modules[__name__].resource
-        ClientError     = sys.modules[__name__].ClientError
+        get_lang_class = sys.modules[__name__].get_lang_class
+        resource = sys.modules[__name__].resource
+        ClientError = sys.modules[__name__].ClientError
 
         # Log
-        if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Retrieving \'{model_name}\' from {model_bucket}.')
+        if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(
+            f'Retrieving \'{model_name}\' from {model_bucket}.')
 
         # Attempt
         try:
 
             # Model & config retrieval from the models bucket
-            model   = resource('s3').Object(model_bucket, f'{model_name}/model').get()['Body'].read()
-            config  = resource('s3').Object(model_bucket, f'{model_name}/config').get()['Body'].read().decode('utf-8')
+            model = resource('s3').Object(model_bucket, f'{model_name}/model').get()['Body'].read()
+            config = resource('s3').Object(model_bucket, f'{model_name}/config').get()['Body'].read().decode('utf-8')
 
         # Except
         except ClientError as clientError:
 
-            if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Error(f'Error: Failed to retrieve \'{model_name}\' - {clientError.response["Error"]["Code"]}')
+            if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Error(
+                f'Error: Failed to retrieve \'{model_name}\' - {clientError.response["Error"]["Code"]}')
 
         # Return the results
         return config, model
@@ -182,10 +179,10 @@ class OpenSearchWorker:
                        })
 
         # Initialize the names
-        get_lang_class  = sys.modules[__name__].get_lang_class
-        resource        = sys.modules[__name__].resource
-        ClientError     = sys.modules[__name__].ClientError
-        Config          = sys.modules[__name__].Config
+        get_lang_class = sys.modules[__name__].get_lang_class
+        resource = sys.modules[__name__].resource
+        ClientError = sys.modules[__name__].ClientError
+        Config = sys.modules[__name__].Config
 
         # Initialize the Config from string
         config = Config().from_str(config)
@@ -211,7 +208,6 @@ class OpenSearchWorker:
 
             # While we haven't reached a line feed
             while current[0] != 0x0a:
-
                 # Append to the result
                 result.append(current[0])
 
@@ -228,14 +224,13 @@ class OpenSearchWorker:
 
         # If we have a valid model name and bucket
         if config is not None and model is not None:
-
             # Initialize the client
             self.client = OpenSearchWorker.initialize_open_search_client(endpoint, region)
 
             # Initialize the model
-            self.language   = OpenSearchWorker.initialize_language_model(config, model)
+            self.language = OpenSearchWorker.initialize_language_model(config, model)
             self.model_name = model_name
-            self.file       = file
+            self.file = file
 
             # Set the count
             self.count = OpenSearchWorker.Count
@@ -246,10 +241,12 @@ class OpenSearchWorker:
 
     def ingest_local(self, retain_keys, language_key):
 
-        current_file_read   = 0
-        lines_read          = 0
-        previous_progress   = 0
-        terminate           = False
+        current_file_read = 0
+        lines_read = 0
+        previous_progress = 0
+        terminate = False
+
+        if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Size: {self.current_file_size}')
 
         # Iterate while we have a language
         while self.language is not None:
@@ -276,10 +273,11 @@ class OpenSearchWorker:
                     current_file_read += len(line) + 1
 
                     # Calculate the progress
-                    progress = (current_file_read / self.current_file_size)*100
+                    progress = (current_file_read / self.current_file_size) * 100
 
                 # Otherwise
-                else: terminate = True
+                else:
+                    terminate = True
 
             # Finally
             except:
@@ -291,7 +289,6 @@ class OpenSearchWorker:
 
             # If we should display the progress
             if progress - previous_progress > 1:
-
                 # Print out the progress
                 OpenSearchWorker.Log.Info(f'Thread {self.count} - Lines Read: {lines_read}, {progress:.1f}%')
 
@@ -309,15 +306,14 @@ class OpenSearchWorker:
 
             # Merge the results
             for key, value in categories.items():
-
                 # Set the value
                 entry[key] = value
 
             if 'datatype' in entry and 'createdAt' in entry:
 
                 # Initialize the index name & createdAt
-                index       = entry['datatype']
-                createdAt   = entry['createdAt']
+                index = entry['datatype']
+                createdAt = entry['createdAt']
 
                 # Delete the key
                 del entry['datatype']
@@ -325,28 +321,27 @@ class OpenSearchWorker:
 
                 # Create the index if it does not exist
                 if not self.client.indices.exists(index):
-
                     # Create it if necessary
                     self.client.indices.create(index, body={
                         'mappings': {
                             'properties': {
-                                'username': {'type': 'text', 'analyzer': 'standard' },
-                                'creator': {'type': 'text', 'analyzer': 'standard' },
-                                'parent':  {'type': 'text', 'analyzer': 'standard' },
-                                'createdAtformatted':  {'type': 'text', 'analyzer': 'standard' },
-                                'verified':  {'type': 'text', 'analyzer': 'standard' },
-                                'impressions':  {'type': 'text', 'analyzer': 'standard' },
-                                'reposts':  {'type': 'text', 'analyzer': 'standard' },
-                                'state':  {'type': 'text', 'analyzer': 'standard' },
-                                'followers':  {'type': 'text', 'analyzer': 'standard' },
-                                'following':  {'type': 'text', 'analyzer': 'standard' },
-                                'depth':  {'type': 'text', 'analyzer': 'standard' },
-                                'comments':  {'type': 'text', 'analyzer': 'standard' },
-                                'body':  {'type': 'text', 'analyzer': 'english' },
-                                'bodywithurls':  {'type': 'text', 'analyzer': 'english' },
-                                'hashtags':  {'type': 'text', 'analyzer': 'english' },
-                                'POSITIVE':   {'type': 'text', 'analyzer': 'standard' },
-                                'NEGATIVE':  {'type': 'text', 'analyzer': 'standard' },
+                                'username': {'type': 'text', 'analyzer': 'standard'},
+                                'creator': {'type': 'text', 'analyzer': 'standard'},
+                                'parent': {'type': 'text', 'analyzer': 'standard'},
+                                'createdAtformatted': {'type': 'text', 'analyzer': 'standard'},
+                                'verified': {'type': 'text', 'analyzer': 'standard'},
+                                'impressions': {'type': 'text', 'analyzer': 'standard'},
+                                'reposts': {'type': 'text', 'analyzer': 'standard'},
+                                'state': {'type': 'text', 'analyzer': 'standard'},
+                                'followers': {'type': 'text', 'analyzer': 'standard'},
+                                'following': {'type': 'text', 'analyzer': 'standard'},
+                                'depth': {'type': 'text', 'analyzer': 'standard'},
+                                'comments': {'type': 'text', 'analyzer': 'standard'},
+                                'body': {'type': 'text', 'analyzer': 'english'},
+                                'bodywithurls': {'type': 'text', 'analyzer': 'english'},
+                                'hashtags': {'type': 'text', 'analyzer': 'english'},
+                                'POSITIVE': {'type': 'text', 'analyzer': 'standard'},
+                                'NEGATIVE': {'type': 'text', 'analyzer': 'standard'},
                             }
                         }
                     })
@@ -360,15 +355,10 @@ class OpenSearchWorker:
 
     def ingest(self, retain_keys, language_key):
 
-        global current_file
-        global current_file_read
-        global current_file_size
-        global current_file_lock
-        global lines_read
-
-        previous_progress = 0
-
-        terminate = False
+        previous_progress   = 0
+        current_file_read   = 0
+        lines_read          = 0
+        terminate           = False
 
         while self.language is not None:
 
@@ -378,17 +368,14 @@ class OpenSearchWorker:
             # Clear the current progress
             progress = 0
 
-            # Attempt to acquire the file lock
-            current_file_lock.acquire()
-
             # Attempt
             try:
 
                 # Check if the file has finished
-                if not current_file_read >= current_file_size:
+                if not current_file_read >= self.current_file_size:
 
                     # Retrieve the line
-                    line = OpenSearchWorker.read_line(current_file)
+                    line = OpenSearchWorker.read_line(self.file)
 
                     # Update the amount of read lines
                     lines_read += 1
@@ -397,16 +384,15 @@ class OpenSearchWorker:
                     current_file_read += len(line) + 1
 
                     # Calculate the progress
-                    progress = (current_file_read / current_file_size)*100
+                    progress = (current_file_read / self.current_file_size) * 100
 
                 # Otherwise
-                else: terminate = True
+                else:
+                    terminate = True
 
-            # Finally
-            finally:
+            except:
 
-                # Release the lock
-                current_file_lock.release()
+                if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Error')
 
             # Break condition
             if terminate: break
@@ -438,8 +424,8 @@ class OpenSearchWorker:
             if 'datatype' in entry and 'createdAt' in entry:
 
                 # Initialize the index name & createdAt
-                index       = entry['datatype']
-                createdAt   = entry['createdAt']
+                index = entry['datatype']
+                createdAt = entry['createdAt']
 
                 # Delete the key
                 del entry['datatype']
@@ -447,28 +433,27 @@ class OpenSearchWorker:
 
                 # Create the index if it does not exist
                 if not self.client.indices.exists(index):
-
                     # Create it if necessary
                     self.client.indices.create(index, body={
                         'mappings': {
                             'properties': {
-                                'username': {'type': 'text', 'analyzer': 'standard' },
-                                'creator': {'type': 'text', 'analyzer': 'standard' },
-                                'parent':  {'type': 'text', 'analyzer': 'standard' },
-                                'createdAtformatted':  {'type': 'text', 'analyzer': 'standard' },
-                                'verified':  {'type': 'text', 'analyzer': 'standard' },
-                                'impressions':  {'type': 'text', 'analyzer': 'standard' },
-                                'reposts':  {'type': 'text', 'analyzer': 'standard' },
-                                'state':  {'type': 'text', 'analyzer': 'standard' },
-                                'followers':  {'type': 'text', 'analyzer': 'standard' },
-                                'following':  {'type': 'text', 'analyzer': 'standard' },
-                                'depth':  {'type': 'text', 'analyzer': 'standard' },
-                                'comments':  {'type': 'text', 'analyzer': 'standard' },
-                                'body':  {'type': 'text', 'analyzer': 'english' },
-                                'bodywithurls':  {'type': 'text', 'analyzer': 'english' },
-                                'hashtags':  {'type': 'text', 'analyzer': 'english' },
-                                'POSITIVE':   {'type': 'text', 'analyzer': 'standard' },
-                                'NEGATIVE':  {'type': 'text', 'analyzer': 'standard' },
+                                'username': {'type': 'text', 'analyzer': 'standard'},
+                                'creator': {'type': 'text', 'analyzer': 'standard'},
+                                'parent': {'type': 'text', 'analyzer': 'standard'},
+                                'createdAtformatted': {'type': 'text', 'analyzer': 'standard'},
+                                'verified': {'type': 'text', 'analyzer': 'standard'},
+                                'impressions': {'type': 'text', 'analyzer': 'standard'},
+                                'reposts': {'type': 'text', 'analyzer': 'standard'},
+                                'state': {'type': 'text', 'analyzer': 'standard'},
+                                'followers': {'type': 'text', 'analyzer': 'standard'},
+                                'following': {'type': 'text', 'analyzer': 'standard'},
+                                'depth': {'type': 'text', 'analyzer': 'standard'},
+                                'comments': {'type': 'text', 'analyzer': 'standard'},
+                                'body': {'type': 'text', 'analyzer': 'english'},
+                                'bodywithurls': {'type': 'text', 'analyzer': 'english'},
+                                'hashtags': {'type': 'text', 'analyzer': 'english'},
+                                'POSITIVE': {'type': 'text', 'analyzer': 'standard'},
+                                'NEGATIVE': {'type': 'text', 'analyzer': 'standard'},
                             }
                         }
                     })
@@ -485,8 +470,11 @@ def initialize_workers(arguments, config, model, n_threads=1, current_file_size=
     # Log
     if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Initializing workers: {n_threads}')
 
-    workers         = [OpenSearchWorker(config, model, arguments['model_name'], 'alpha.lowerbound.dev', 'us-east-1', current_file_size, file) for index in range(n_threads)]
-    language_key    = 'body'
+    workers = [
+        OpenSearchWorker(config, model, arguments['model_name'], 'alpha.lowerbound.dev', 'us-east-1', current_file_size,
+                         file) for index in range(n_threads)]
+
+    language_key = 'body'
 
     # Initialize the threads
     threads = []
@@ -504,6 +492,9 @@ def initialize_workers(arguments, config, model, n_threads=1, current_file_size=
     return threads
 
 def ingest_s3_files(arguments, n_threads):
+
+    # Download the language model
+    config, model = OpenSearchWorker.download_language_model(arguments['modelsbucket'], arguments['model_name'])
 
     # Import the required modules
     from import_modules import import_modules
@@ -532,23 +523,15 @@ def ingest_s3_files(arguments, n_threads):
     objects = datasets_bucket.objects.filter(Delimiter='/', Prefix=arguments['dataset'])
     objects = [{'key': object.key, 'size': object.size} for object in objects if object.size > 0]
 
-    global current_file
-    global current_file_lock
-    global current_file_read
-    global current_file_size
-    global lines_read
-
     # Iterate through the object
     for object in objects:
 
         # Update the values
-        current_file_read   = 0
-        lines_read          = 0
         current_file_size   = object['size']
         current_file        = resource('s3').Object(datasets_bucket_name, object['key']).get()['Body']
 
         # Initialize the threads
-        threads = initialize_workers(arguments, config, model, n_threads)
+        threads = initialize_workers(arguments, config, model, n_threads, current_file_size, current_file)
 
         # Start the threads
         [thread.start() for thread in threads]
@@ -565,17 +548,12 @@ def ingest_local_files(arguments, n_threads, path):
     import os
     import mmap
 
-    global current_file
-    global current_file_lock
-    global current_file_read
-    global lines_read
-
     # Retrieve each file
     files       = [os.path.join(path, file) for file in os.listdir(path) if os.path.isfile(os.path.join(path, file))]
     pool        = []
-    file_chunk  = []
     chunks      = 40
     count       = 0
+    _read_file  = None
 
     # Iterate through the files
     for file in files:
@@ -587,15 +565,10 @@ def ingest_local_files(arguments, n_threads, path):
         with open(file, "r+b") as input:
 
             # Map the file onto memory
-            current_file = mmap.mmap(input.fileno(), 0)
-
-            # Set the metrics
-            current_file_size = current_file.size()
-            current_file_read = 0
-            lines_read        = 0
+            _read_file = mmap.mmap(input.fileno(), 0)
 
         # Initialize the threads
-        threads = initialize_workers(arguments, config, model, n_threads, current_file_size, current_file)
+        threads = initialize_workers(arguments, config, model, n_threads, _read_file.size(), _read_file)
 
         # Iterate through the threads
         for thread in threads:
@@ -631,15 +604,15 @@ if __name__ == "__main__":
     OpenSearchWorker.Log = log = Log()
 
     # Consume the arguments
-    arguments = Arguments(sys.argv)
+    args = Arguments(sys.argv)
 
     # Check the required arguments
     for required in REQUIRED_ARGUMENTS:
 
         # Check
-        if required not in arguments.dictionary:
+        if required not in args.dictionary:
 
             # Log the error and exit
             log.Error(f'Error: Required argument \'{required}\' not specified.')
 
-    ingest_local_files(arguments, int(arguments['threads']), '/media/cuenca/data/parler_/parler_data/')
+    ingest_local_files(args, int(args['threads']), '/media/cuenca/data/parler_/parler_data/')
