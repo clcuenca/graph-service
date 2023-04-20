@@ -30,6 +30,7 @@ retain = ['username',
 
 
 class OpenSearchWorker:
+
     ## -------------
     ## Static Fields
 
@@ -131,8 +132,8 @@ class OpenSearchWorker:
         try:
 
             # Model & config retrieval from the models bucket
-            model = resource('s3').Object(model_bucket, f'{model_name}/model').get()['Body'].read()
-            config = resource('s3').Object(model_bucket, f'{model_name}/config').get()['Body'].read().decode('utf-8')
+            model   = resource('s3').Object(model_bucket, f'{model_name}/model').get()['Body'].read()
+            config  = resource('s3').Object(model_bucket, f'{model_name}/config').get()['Body'].read().decode('utf-8')
 
         # Except
         except ClientError as clientError:
@@ -208,6 +209,7 @@ class OpenSearchWorker:
 
             # While we haven't reached a line feed
             while current[0] != 0x0a:
+
                 # Append to the result
                 result.append(current[0])
 
@@ -224,17 +226,18 @@ class OpenSearchWorker:
 
         # If we have a valid model name and bucket
         if config is not None and model is not None:
+
             # Initialize the client
             self.client = OpenSearchWorker.initialize_open_search_client(endpoint, region)
 
             # Initialize the model
-            self.language = OpenSearchWorker.initialize_language_model(config, model)
+            self.language   = OpenSearchWorker.initialize_language_model(config, model)
             self.model_name = model_name
-            self.file = file
+            self.file       = file
 
             # Set the count
-            self.count = OpenSearchWorker.Count
-            self.current_file_size = current_file_size
+            self.count              = OpenSearchWorker.Count
+            self.current_file_size  = current_file_size
 
             # Increment the count
             OpenSearchWorker.Count += 1
@@ -354,17 +357,23 @@ class OpenSearchWorker:
 
     def ingest(self, retain_keys, language_key):
 
-        previous_progress   = 0
-        current_file_read   = 0
-        lines_read          = 0
-        terminate           = False
+        current_file_read = 0
+        lines_read = 0
+        terminate = False
 
+        import os
+        import psutil
+
+        p = psutil.Process(os.getpid())
+        p.cpu_affinity([self.count % 20])
+
+        # Iterate while we have a language
         while self.language is not None:
 
             # Initialize the line
             line = None
 
-            # Clear the current progress
+            # Initialize the progress
             progress = 0
 
             # Attempt
@@ -387,23 +396,19 @@ class OpenSearchWorker:
 
                 # Otherwise
                 else:
+
                     terminate = True
 
+            # Finally
             except:
 
-                if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Error')
+                print(f'Thread {self.count} - Error')
 
             # Break condition
             if terminate: break
 
-            # If we should display the progress
-            if progress - previous_progress > 1:
-
-                # Print out the progress
-                OpenSearchWorker.Log.Info(f'Thread {self.count} - Lines Read: {lines_read}, {progress:.2f}%')
-
-                # Set the previous progress
-                previous_progress = progress
+            # Print out the progress
+            OpenSearchWorker.Log.Info(f'Thread {self.count} - Lines Read: {lines_read}, {progress:.1f}%')
 
             # Initialize the entry
             entry = {key: value for key, value in json.loads(line).items() if key in retain_keys}
@@ -482,7 +487,7 @@ def initialize_workers(arguments, config, model, n_threads=1, current_file_size=
     for worker in workers:
 
         # Initialize & append the thread
-        threads.append(threading.Thread(target=worker.ingest_local, args=(retain, language_key)))
+        threads.append(threading.Thread(target=worker.ingest, args=(retain, language_key)))
 
     # Log
     if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Workers Initialized')
@@ -522,6 +527,10 @@ def ingest_s3_files(arguments, n_threads):
     objects = datasets_bucket.objects.filter(Delimiter='/', Prefix=arguments['dataset'])
     objects = [{'key': object.key, 'size': object.size} for object in objects if object.size > 0]
 
+    pool    = []
+    chunks  = 20
+    count   = 0
+
     # Iterate through the object
     for object in objects:
 
@@ -532,11 +541,33 @@ def ingest_s3_files(arguments, n_threads):
         # Initialize the threads
         threads = initialize_workers(arguments, config, model, n_threads, current_file_size, current_file)
 
-        # Start the threads
-        [thread.start() for thread in threads]
+        # Iterate through the threads
+        for thread in threads:
 
-        # Wait
-        [thread.join() for thread in threads]
+            # Start
+            thread.start()
+
+            # Append
+            pool.append(thread)
+
+        # Increment the count
+        count += 1
+
+        # If we have the maximum amount of files open
+        if count == chunks:
+
+            # Wait
+            [thread.join() for thread in pool]
+
+            # Reset the file chunk & pool
+            pool = []
+
+            # Reset the count
+            count = 0
+
+    if count > 0:
+
+        [thread.join() for thread in pool]
 
 def ingest_local_files(arguments, n_threads, path):
 
@@ -616,4 +647,5 @@ if __name__ == "__main__":
             # Log the error and exit
             log.Error(f'Error: Required argument \'{required}\' not specified.')
 
-    ingest_local_files(args, int(args['threads']), '/media/cuenca/data/parler_/parler_data/')
+    ingest_s3_files(args, int(args['threads']))
+    #ingest_local_files(args, int(args['threads']), '/media/cuenca/data/parler_/parler_data/')
