@@ -14,14 +14,17 @@ import {CognitoAuthenticatedRole} from "./cognito-authenticated-role";
 import {CognitoUnauthenticatedRole} from "./cognito-unauthenticated-role";
 import {
     CfnIdentityPool,
-    CfnIdentityPoolRoleAttachment, OAuthScope,
+    CfnIdentityPoolRoleAttachment,
+    OAuthScope,
     UserPool,
     UserPoolClient,
     UserPoolDomain,
-    UserPoolIdentityProviderAmazon, UserPoolResourceServer
+    UserPoolIdentityProviderAmazon,
+    UserPoolResourceServer
 } from "aws-cdk-lib/aws-cognito";
 import {AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId} from "aws-cdk-lib/custom-resources";
 import {RetentionDays} from "aws-cdk-lib/aws-logs";
+import {Effect, PolicyStatement, ServicePrincipal} from "aws-cdk-lib/aws-iam";
 
 /// ----------------------------------
 /// UserPoolClientSecretRetrieverProps
@@ -203,6 +206,16 @@ export class OpenSearchCognitoStack extends Stack {
 
         this._domain = new Domain(this, `${props.id}Domain`, {
             version:                EngineVersion.OPENSEARCH_1_0,
+            accessPolicies:         [
+                new PolicyStatement({
+                    effect: Effect.ALLOW,
+                    actions:    ['es:ESHttp*'],
+                    resources:  [`arn:aws:es:${props.region}:${props.account}:domain/${props.stage}.${props.domainName}/*`],
+                    principals: [
+                        new ServicePrincipal('ec2.amazonaws.com')
+                    ]
+                })
+            ],
             enableVersionUpgrade:   true,
             enforceHttps:           true,
             nodeToNodeEncryption:   true,
