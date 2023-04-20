@@ -582,7 +582,11 @@ def ingest_local_files(arguments, n_threads, path):
     global lines_read
 
     # Retrieve each file
-    files = [os.path.join(path, file) for file in os.listdir(path) if os.path.isfile(os.path.join(path, file))]
+    files       = [os.path.join(path, file) for file in os.listdir(path) if os.path.isfile(os.path.join(path, file))]
+    pool        = []
+    file_chunk  = []
+    chunks      = 10
+    count       = 0
 
     # Iterate through the files
     for file in files:
@@ -600,6 +604,7 @@ def ingest_local_files(arguments, n_threads, path):
             current_file_size = current_file.size()
             current_file_read = 0
             lines_read        = 0
+            file_chunk.append(file)
 
         # Initialize the threads
         threads = initialize_workers(arguments, config, model, n_threads)
@@ -607,11 +612,37 @@ def ingest_local_files(arguments, n_threads, path):
         # Start the threads
         [thread.start() for thread in threads]
 
-        # Wait
-        [thread.join() for thread in threads]
+        # Add them to the pool
+        [pool.append(thread) for thread in threads]
 
-        # Close the file
-        current_file.close()
+        # Increment the count
+        count += 1
+
+        # If we have the maximum amount of files open
+        if count == chunks:
+
+            # Wait
+            [thread.join() for thread in pool]
+
+            # Close the files
+            [_file.close() for _file in file_chunk]
+
+            # Reset the file chunk & pool
+            file_chunk  = []
+            pool        = []
+
+            # Reset the count
+            count = 0
+
+    if count > 0:
+
+        if len(pool) > 0: [thread.join() for thread in pool]
+
+        [_file.close() for _file in file_chunk]
+
+        file_chunk  = []
+        pool        = []
+        count       = 0
 
 if __name__ == "__main__":
 
