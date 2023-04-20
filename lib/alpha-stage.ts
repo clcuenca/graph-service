@@ -66,6 +66,7 @@ export class AlphaStage extends Stage {
     private readonly mlScriptsBucket:               S3Stack                 ;
     private readonly mlDatasetsBucket:              S3Stack                 ;
     private readonly mlModelsBucket:                S3Stack                 ;
+    private readonly algorithmicsBucket:            S3Stack                 ;
     private readonly modelsTableStack:              DynamoDBStack           ;
     private readonly ingestionTableStack:           DynamoDBStack           ;
     private readonly trainingSSMDocumentStack:      SSMDocumentStack        ;
@@ -131,6 +132,14 @@ export class AlphaStage extends Stage {
             stackId:            `${props.appName}MLScriptsBucketStack`,
             id:                 `${props.appName}MLScriptsBucket`,
             bucketName:         `${props.appName}-ml-scripts-bucket`
+        });
+
+        this.algorithmicsBucket = new S3Stack(this, {
+            account:            props.account,
+            region:             props.region,
+            stackId:            `${props.appName}AlgorithmicsBucketStack`,
+            id:                 `${props.appName}AlgorithmicsBucket`,
+            bucketName:         `${props.appName}-algorithmics-bucket`
         });
 
         this.ingestionTableStack = new DynamoDBStack(this, {
