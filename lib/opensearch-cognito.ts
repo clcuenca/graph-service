@@ -233,7 +233,7 @@ export class OpenSearchCognitoStack extends Stack {
                 certificate:        this._certificate
             }
         });
-
+        //
         this._cognitoAuthenticatedRole = new CognitoAuthenticatedRole(this, {
             id:             `${props.id}CognitoAuthenticatedRole`,
             identityPoolId: this.identityPool.ref,
