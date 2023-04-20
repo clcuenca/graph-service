@@ -323,44 +323,50 @@ class OpenSearchWorker:
                 # Set the value
                 entry[key] = value
 
-            # Initialize the index name & createdAt
-            index       = entry['datatype']
-            createdAt   = entry['createdAt']
+            if 'datatype' in entry and 'createdAt' in entry:
 
-            # Delete the key
-            del entry['datatype']
-            del entry['createdAt']
+                # Initialize the index name & createdAt
+                index       = entry['datatype']
+                createdAt   = entry['createdAt']
 
-            # Create the index if it does not exist
-            if not self.client.indices.exists(index):
+                # Delete the key
+                del entry['datatype']
+                del entry['createdAt']
 
-                # Create it if necessary
-                self.client.indices.create(index, body={
-                    'mappings': {
-                        'properties': {
-                            'username': {'type': 'text', 'analyzer': 'standard' },
-                            'creator': {'type': 'text', 'analyzer': 'standard' },
-                            'parent':  {'type': 'text', 'analyzer': 'standard' },
-                            'createdAtformatted':  {'type': 'text', 'analyzer': 'standard' },
-                            'verified':  {'type': 'text', 'analyzer': 'standard' },
-                            'impressions':  {'type': 'text', 'analyzer': 'standard' },
-                            'reposts':  {'type': 'text', 'analyzer': 'standard' },
-                            'state':  {'type': 'text', 'analyzer': 'standard' },
-                            'followers':  {'type': 'text', 'analyzer': 'standard' },
-                            'following':  {'type': 'text', 'analyzer': 'standard' },
-                            'depth':  {'type': 'text', 'analyzer': 'standard' },
-                            'comments':  {'type': 'text', 'analyzer': 'standard' },
-                            'body':  {'type': 'text', 'analyzer': 'english' },
-                            'bodywithurls':  {'type': 'text', 'analyzer': 'english' },
-                            'hashtags':  {'type': 'text', 'analyzer': 'english' },
-                            'POSITIVE':   {'type': 'text', 'analyzer': 'standard' },
-                            'NEGATIVE':  {'type': 'text', 'analyzer': 'standard' },
+                # Create the index if it does not exist
+                if not self.client.indices.exists(index):
+
+                    # Create it if necessary
+                    self.client.indices.create(index, body={
+                        'mappings': {
+                            'properties': {
+                                'username': {'type': 'text', 'analyzer': 'standard' },
+                                'creator': {'type': 'text', 'analyzer': 'standard' },
+                                'parent':  {'type': 'text', 'analyzer': 'standard' },
+                                'createdAtformatted':  {'type': 'text', 'analyzer': 'standard' },
+                                'verified':  {'type': 'text', 'analyzer': 'standard' },
+                                'impressions':  {'type': 'text', 'analyzer': 'standard' },
+                                'reposts':  {'type': 'text', 'analyzer': 'standard' },
+                                'state':  {'type': 'text', 'analyzer': 'standard' },
+                                'followers':  {'type': 'text', 'analyzer': 'standard' },
+                                'following':  {'type': 'text', 'analyzer': 'standard' },
+                                'depth':  {'type': 'text', 'analyzer': 'standard' },
+                                'comments':  {'type': 'text', 'analyzer': 'standard' },
+                                'body':  {'type': 'text', 'analyzer': 'english' },
+                                'bodywithurls':  {'type': 'text', 'analyzer': 'english' },
+                                'hashtags':  {'type': 'text', 'analyzer': 'english' },
+                                'POSITIVE':   {'type': 'text', 'analyzer': 'standard' },
+                                'NEGATIVE':  {'type': 'text', 'analyzer': 'standard' },
+                            }
                         }
-                    }
-                })
+                    })
 
-            # TODO: Shove into open search here
-            self.client.index(index, id=f'{entry["creator"]}:{createdAt}', body=entry)
+                # TODO: Shove into open search here
+                self.client.index(index, id=f'{entry["creator"]}:{createdAt}', body=entry)
+
+        else:
+
+            if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Skipping entry')
 
     def ingest(self, retain_keys, language_key):
 
