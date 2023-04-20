@@ -24,6 +24,7 @@ import {HostedZone} from "aws-cdk-lib/aws-route53";
 import {Certificate} from "aws-cdk-lib/aws-certificatemanager";
 import {OpenSearchCognitoStack} from "./opensearch-cognito";
 import {ApplicationInstanceStack} from "./application-instance-stack";
+import {TimeStreamDatabaseStack} from "./time-stream-database-stack";
 
 /// -----------------
 /// Alpha Stage Props
@@ -71,7 +72,7 @@ export class AlphaStage extends Stage {
     private readonly ingestionInstanceStack:        InstanceStack           ;
     private readonly algorithmicInstanceStack:      InstanceStack           ;
     private readonly opensearchStack:               OpenSearchCognitoStack  ;
-    private readonly testInstanceStack:             ApplicationInstanceStack    ;
+    private readonly timestreamDatabaseStack:       TimeStreamDatabaseStack ;
 
     /// -----------
     /// Constructor
@@ -147,6 +148,13 @@ export class AlphaStage extends Stage {
             id:                 `${props.appName}ModelsTable`,
             tableName:          `${props.appName}ModelsTable`,
             partitionKey:       { name: 'dataset', type: AttributeType.STRING },
+        });
+
+        this.timestreamDatabaseStack = new TimeStreamDatabaseStack(this, {
+            account:            props.account,
+            region:             props.region,
+            stackId:            `${props.appName}TimeStreamStack`,
+            id:                 `${props.appName}TimeStream`
         });
 
         this.mlTrainingInstanceStack = new InstanceStack(this, {
