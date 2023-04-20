@@ -224,7 +224,7 @@ class OpenSearchWorker:
     ## ------------
     ## Constructors
 
-    def __init__(self, config, model, model_name, endpoint='', region='', current_file_size=0):
+    def __init__(self, config, model, model_name, endpoint='', region='', current_file_size=0, file=None):
 
         # If we have a valid model name and bucket
         if config is not None and model is not None:
@@ -235,6 +235,7 @@ class OpenSearchWorker:
             # Initialize the model
             self.language   = OpenSearchWorker.initialize_language_model(config, model)
             self.model_name = model_name
+            self.file       = file
 
             # Set the count
             self.count = OpenSearchWorker.Count
@@ -247,9 +248,6 @@ class OpenSearchWorker:
 
         current_file_read   = 0
         lines_read          = 0
-
-        import time
-
         previous_progress   = 0
         terminate           = False
 
@@ -269,7 +267,7 @@ class OpenSearchWorker:
                 if not current_file_read >= self.current_file_size:
 
                     # Retrieve the line
-                    line = current_file.readline()
+                    line = self.file.readline()
 
                     # Update the amount of read lines
                     lines_read += 1
@@ -482,12 +480,12 @@ class OpenSearchWorker:
 
             if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Skipping entry')
 
-def initialize_workers(arguments, config, model, n_threads=1, current_file_size=0):
+def initialize_workers(arguments, config, model, n_threads=1, current_file_size=0, file=None):
 
     # Log
     if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Initializing workers: {n_threads}')
 
-    workers         = [OpenSearchWorker(config, model, arguments['model_name'], 'alpha.lowerbound.dev', 'us-east-1', current_file_size) for index in range(n_threads)]
+    workers         = [OpenSearchWorker(config, model, arguments['model_name'], 'alpha.lowerbound.dev', 'us-east-1', current_file_size, file) for index in range(n_threads)]
     language_key    = 'body'
 
     # Initialize the threads
@@ -570,7 +568,6 @@ def ingest_local_files(arguments, n_threads, path):
     global current_file
     global current_file_lock
     global current_file_read
-    current_file_size = 0
     global lines_read
 
     # Retrieve each file
@@ -599,7 +596,7 @@ def ingest_local_files(arguments, n_threads, path):
             file_chunk.append(file)
 
         # Initialize the threads
-        threads = initialize_workers(arguments, config, model, n_threads, current_file_size)
+        threads = initialize_workers(arguments, config, model, n_threads, current_file_size, file)
 
         # Iterate through the threads
         for thread in threads:
@@ -619,12 +616,8 @@ def ingest_local_files(arguments, n_threads, path):
             # Wait
             [thread.join() for thread in pool]
 
-            # Close the files
-            [_file.close() for _file in file_chunk]
-
             # Reset the file chunk & pool
-            file_chunk  = []
-            pool        = []
+            pool = []
 
             # Reset the count
             count = 0
