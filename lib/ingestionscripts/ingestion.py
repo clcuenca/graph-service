@@ -362,7 +362,7 @@ class OpenSearchWorker:
                 })
 
             # TODO: Shove into open search here
-            self.client.index(entry['datatype'], id=f'{entry["creator"]}:{createdAt}')
+            self.client.index(index, id=f'{entry["creator"]}:{createdAt}')
 
 
 
