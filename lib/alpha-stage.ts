@@ -25,6 +25,7 @@ import {Certificate} from "aws-cdk-lib/aws-certificatemanager";
 import {OpenSearchCognitoStack} from "./opensearch-cognito";
 import {ApplicationInstanceStack} from "./application-instance-stack";
 import {TimeStreamDatabaseStack} from "./time-stream-database-stack";
+import {GrantTimeStreamDatabaseWritePolicyStatement} from "./grant-timestream-write-policy-statement";
 
 /// -----------------
 /// Alpha Stage Props
@@ -216,9 +217,11 @@ export class AlphaStage extends Stage {
             machineImage:       props.algorithmicMachineImage,
             keyname:            props.algorithmicKeyPairName,
             startup:            props.algorithmicStartup,
-            policyStatements:   [                new GrantBucketReadPolicyStatement({
-                bucket: this.mlScriptsBucket.bucket
-            })]
+            policyStatements:   [
+                new GrantTimeStreamDatabaseWritePolicyStatement({
+                    database:   this.timestreamDatabaseStack.database
+                })
+            ]
         });
 
         this.trainingSSMDocumentStack = new SSMDocumentStack(this, {

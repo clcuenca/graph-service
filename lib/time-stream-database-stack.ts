@@ -35,4 +35,10 @@ export class TimeStreamDatabaseStack extends Stack {
 
     }
 
+    get database(): CfnDatabase {
+
+        return this._database;
+
+    }
+
 }
