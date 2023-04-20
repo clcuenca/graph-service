@@ -67,8 +67,6 @@ class OpenSearchWorker:
                            'Session': {}
                        })
 
-        Log.Info(f'Binding imported construct names')
-
         # Bind the names
         AWS4Auth                = sys.modules[__name__].AWS4Auth
         OpenSearch              = sys.modules[__name__].OpenSearch
@@ -232,7 +230,7 @@ class OpenSearchWorker:
         if config is not None and model is not None:
 
             # Initialize the client
-            self.client = OpenSearchWorker.initialize_open_search_client('alpha.lowerbound.dev', 'us-east-1')
+            self.client = OpenSearchWorker.initialize_open_search_client(endpoint, region)
 
             # Initialize the model
             self.language   = OpenSearchWorker.initialize_language_model(config, model)
@@ -273,7 +271,7 @@ class OpenSearchWorker:
                 if not current_file_read >= current_file_size:
 
                     # Yield if we have to
-                    while current_file_lock.locked(): time.sleep(0)
+                    #while current_file_lock.locked(): time.sleep(0)
 
                     # Acquire/release
                     with current_file_lock:
@@ -441,51 +439,57 @@ class OpenSearchWorker:
                 # Set the value
                 entry[key] = value
 
-            # Initialize the index name & createdAt
-            index       = entry['datatype']
-            createdAt   = entry['createdAt']
+            if 'datatype' in entry and 'createdAt' in entry:
 
-            # Delete the key
-            del entry['datatype']
-            del entry['createdAt']
+                # Initialize the index name & createdAt
+                index       = entry['datatype']
+                createdAt   = entry['createdAt']
 
-            # Create the index if it does not exist
-            if not self.client.indices.exists(index):
+                # Delete the key
+                del entry['datatype']
+                del entry['createdAt']
 
-                # Create it if necessary
-                self.client.indices.create(index, body={
-                    'mappings': {
-                        'properties': {
-                            'username': {'type': 'text', 'analyzer': 'standard' },
-                            'creator': {'type': 'text', 'analyzer': 'standard' },
-                            'parent':  {'type': 'text', 'analyzer': 'standard' },
-                            'createdAtformatted':  {'type': 'text', 'analyzer': 'standard' },
-                            'verified':  {'type': 'text', 'analyzer': 'standard' },
-                            'impressions':  {'type': 'text', 'analyzer': 'standard' },
-                            'reposts':  {'type': 'text', 'analyzer': 'standard' },
-                            'state':  {'type': 'text', 'analyzer': 'standard' },
-                            'followers':  {'type': 'text', 'analyzer': 'standard' },
-                            'following':  {'type': 'text', 'analyzer': 'standard' },
-                            'depth':  {'type': 'text', 'analyzer': 'standard' },
-                            'comments':  {'type': 'text', 'analyzer': 'standard' },
-                            'body':  {'type': 'text', 'analyzer': 'english' },
-                            'bodywithurls':  {'type': 'text', 'analyzer': 'english' },
-                            'hashtags':  {'type': 'text', 'analyzer': 'english' },
-                            'POSITIVE':   {'type': 'text', 'analyzer': 'standard' },
-                            'NEGATIVE':  {'type': 'text', 'analyzer': 'standard' },
+                # Create the index if it does not exist
+                if not self.client.indices.exists(index):
+
+                    # Create it if necessary
+                    self.client.indices.create(index, body={
+                        'mappings': {
+                            'properties': {
+                                'username': {'type': 'text', 'analyzer': 'standard' },
+                                'creator': {'type': 'text', 'analyzer': 'standard' },
+                                'parent':  {'type': 'text', 'analyzer': 'standard' },
+                                'createdAtformatted':  {'type': 'text', 'analyzer': 'standard' },
+                                'verified':  {'type': 'text', 'analyzer': 'standard' },
+                                'impressions':  {'type': 'text', 'analyzer': 'standard' },
+                                'reposts':  {'type': 'text', 'analyzer': 'standard' },
+                                'state':  {'type': 'text', 'analyzer': 'standard' },
+                                'followers':  {'type': 'text', 'analyzer': 'standard' },
+                                'following':  {'type': 'text', 'analyzer': 'standard' },
+                                'depth':  {'type': 'text', 'analyzer': 'standard' },
+                                'comments':  {'type': 'text', 'analyzer': 'standard' },
+                                'body':  {'type': 'text', 'analyzer': 'english' },
+                                'bodywithurls':  {'type': 'text', 'analyzer': 'english' },
+                                'hashtags':  {'type': 'text', 'analyzer': 'english' },
+                                'POSITIVE':   {'type': 'text', 'analyzer': 'standard' },
+                                'NEGATIVE':  {'type': 'text', 'analyzer': 'standard' },
+                            }
                         }
-                    }
-                })
+                    })
 
-            # TODO: Shove into open search here
-            self.client.index(index, id=f'{entry["creator"]}:{createdAt}', body=entry)
+                # TODO: Shove into open search here
+                self.client.index(index, id=f'{entry["creator"]}:{createdAt}', body=entry)
+
+        else:
+
+            if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Skipping entry')
 
 def initialize_workers(arguments, config, model, n_threads=1):
 
     # Log
     if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Initializing workers: {n_threads}')
 
-    workers         = [OpenSearchWorker(config, model, arguments['model_name']) for index in range(n_threads)]
+    workers         = [OpenSearchWorker(config, model, arguments['model_name'], 'alpha.lowerbound.dev', 'us-east-1') for index in range(n_threads)]
     language_key    = 'body'
 
     # Initialize the threads
