@@ -269,8 +269,7 @@ export module Constants {
                                         `--datasetbucket ${S3.Bucket.MLDatasets.Name} `+
                                         `--modelsbucket ${S3.Bucket.MLModels.Name} `+
                                         `--dataset {{ dataset }} `+
-                                        `--model {{ model }} ` +
-                                        `{{ parameters }}`
+                                        `--model {{ model }} `
                                     ]
                                 }
                             }
