@@ -210,8 +210,8 @@ class SpacyTextCatTrainer (MLTrainer):
                 with pipe.model.use_params(optimizer.averages):
 
                     # Calculate & retrieve the metrics
-                    metrics = SpacyTextCatTrainer.evaluate(language.tokenizer, pipe, evaluation_text,
-                                                           evaluation_features, [])
+                    metrics = SpacyTextCatTrainer.evaluate(language.tokenizer, pipe,
+                                                           evaluation_text, evaluation_features)
 
                 # Insert the training time (seconds)
                 metrics['training_time'] = training_time
@@ -228,7 +228,7 @@ class SpacyTextCatTrainer (MLTrainer):
     ## -----------
     ## Constructor
 
-    def __init__(self, spacy_model, dataset, split=0.8, epochs=10):
+    def __init__(self, spacy_model, dataset, split=0.8, epochs=1):
         """
         Initializes & trains the Spacy Textcat pipe
         :param spacy_model: The name of the spacy language model
