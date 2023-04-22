@@ -79,13 +79,12 @@ if __name__ == "__main__":
         models_bucket = resource('s3').Bucket(arguments['modelsbucket'])
 
         # Retrieve the metrics
-        metrics = trainer.metrics()
-
-        # Set the dataset field
-        metrics['dataset'] = dataset_key
+        metrics = {'dataset': dataset_key,
+                   'spancat': trainer.spancat_metrics,
+                   'textcat': trainer.textcat_metrics}
 
         # Report to the user
-        log.Info(f'{str(trainer.metrics())}')
+        log.Info(f'{str(metrics)}')
 
         # Upload the config & data
         models_bucket.upload_fileobj(BytesIO(bytes(trainer.configuration().to_str(), 'utf-8')), f'{dataset_key}/config')

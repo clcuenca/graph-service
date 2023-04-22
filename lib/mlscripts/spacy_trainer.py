@@ -82,7 +82,7 @@ class SpacyTextCatTrainer (MLTrainer):
         for index, document in documents:
 
             # Initialize a handle to the features
-            labels = feature_set[index]['cats']
+            labels = feature_set[index]
 
             # Iterate through the label-score pairs
             for feature, score in document.cats.items():
@@ -319,21 +319,17 @@ class SpacyTextCatTrainer (MLTrainer):
         textcat_evaluation_features = [features for text, features in textcat_evaluation]
 
         # Train the spancat pipe
-        SpacyTextCatTrainer.train_pipe(nlp, 'spancat', spancat, epochs, spancat_training,
+        self.spancat_metrics = SpacyTextCatTrainer.train_pipe(nlp, 'spancat', spancat, epochs, spancat_training,
                                        spancat_evaluation_text, spancat_evaluation_features)
 
         # Train the textcat pipe
-        SpacyTextCatTrainer.train_pipe(nlp, 'textcat_multilabel', textcat, epochs, textcat_training,
+        self.textcat_metrics = SpacyTextCatTrainer.train_pipe(nlp, 'textcat_multilabel', textcat, epochs, textcat_training,
                                        textcat_evaluation_text, textcat_evaluation_features)
 
         # Initialize the language, configuration & bytes
         self._language          = nlp
         self._configuration     = nlp.config
         self._bytes             = nlp.to_bytes()
-
-    def metrics(self):
-
-        return self._metrics
 
     def configuration(self):
 
