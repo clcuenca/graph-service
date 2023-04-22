@@ -229,7 +229,7 @@ export module Constants {
 
                     export const Type           = 'Command'             ;
                     export const TargetType     = '/AWS::EC2::Instance' ;
-                    export const Name           = 'TrainingRunDocument5';
+                    export const Name           = 'TrainingRunDocument6';
                     export const UpdateMethod   = 'Replace'             ;
                     export const Scripts        = 'mlscripts.zip'       ;
                     export const Content = {
