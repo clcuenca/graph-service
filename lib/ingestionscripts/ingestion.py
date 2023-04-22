@@ -355,6 +355,127 @@ class OpenSearchWorker:
 
             if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Skipping entry')
 
+    def bulk_local(self, retain_keys, language_key):
+
+        current_file_read = 0
+        lines_read = 0
+        terminate = False
+
+        import os
+        import psutil
+
+        p = psutil.Process(os.getpid())
+        p.cpu_affinity([self.count % 20])
+
+        actions = []
+        bulk    = 1000
+
+        while self.language is not None and True:
+
+            # Iterate while we have a language
+            for count in range(bulk):
+
+                # Initialize the line
+                line = None
+
+                # Initialize the progress
+                progress = 0
+
+                # Attempt
+                try:
+
+                    # Check if the file has finished
+                    if not current_file_read >= self.current_file_size:
+
+                        # Retrieve the line
+                        line = self.file.readline()
+
+                        # Update the amount of read lines
+                        lines_read += 1
+
+                        # Update the amount read
+                        current_file_read += len(line) + 1
+
+                        # Calculate the progress
+                        progress = (current_file_read / self.current_file_size) * 100
+
+                    # Otherwise
+                    else:
+
+                        terminate = True
+
+                # Finally
+                except:
+
+                    print(f'Thread {self.count} - Error')
+
+                # Break condition
+                if terminate: break
+
+                # Print out the progress
+                OpenSearchWorker.Log.Info(f'File: {self.file} - Thread {self.count} - Lines Read: {lines_read}, {progress:.1f}%')
+
+                # Initialize the entry
+                entry = {key: value for key, value in json.loads(line).items() if key in retain_keys}
+
+                # Brand it
+                entry['dataset'] = self.model_name
+
+                # Retrieve the categories for the text value
+                categories = self.language(entry[language_key]).cats if language_key in entry else {}
+
+                # Merge the results
+                for key, value in categories.items():
+
+                    # Set the value
+                    entry[key] = value
+
+                if 'datatype' in entry and 'createdAt' in entry:
+
+                    # Initialize the index name & createdAt
+                    index       = entry['datatype']
+
+                    # Delete the key
+                    del entry['datatype']
+
+                    # Add to actions
+                    actions.append({'index': entry})
+
+            # Create the index if it does not exist
+            if not self.client.indices.exists(index):
+
+                # Create it if necessary
+                self.client.indices.create(index, body={
+                    'mappings': {
+                        'properties': {
+                            'username': {'type': 'text', 'analyzer': 'standard'},
+                            'creator': {'type': 'text', 'analyzer': 'standard'},
+                            'parent': {'type': 'text', 'analyzer': 'standard'},
+                            'createdAtformatted': {'type': 'text', 'analyzer': 'standard'},
+                            'verified': {'type': 'text', 'analyzer': 'standard'},
+                            'impressions': {'type': 'text', 'analyzer': 'standard'},
+                            'reposts': {'type': 'text', 'analyzer': 'standard'},
+                            'state': {'type': 'text', 'analyzer': 'standard'},
+                            'followers': {'type': 'text', 'analyzer': 'standard'},
+                            'following': {'type': 'text', 'analyzer': 'standard'},
+                            'depth': {'type': 'text', 'analyzer': 'standard'},
+                            'comments': {'type': 'text', 'analyzer': 'standard'},
+                            'body': {'type': 'text', 'analyzer': 'english'},
+                            'bodywithurls': {'type': 'text', 'analyzer': 'english'},
+                            'hashtags': {'type': 'text', 'analyzer': 'english'},
+                            'POSITIVE': {'type': 'text', 'analyzer': 'standard'},
+                            'NEGATIVE': {'type': 'text', 'analyzer': 'standard'},
+                        }
+                    }
+                })
+
+                # Bulk upload
+                self.client.bulk(actions, index=index)
+
+        else:
+
+            if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Skipping entry')
+
     def ingest(self, retain_keys, language_key):
 
         current_file_read = 0

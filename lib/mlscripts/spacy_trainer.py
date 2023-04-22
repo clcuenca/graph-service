@@ -67,7 +67,7 @@ class SpacyTextCatTrainer (MLTrainer):
         return pipe
 
     @staticmethod
-    def evaluate(tokenizer, trained, texts: list, categories: list, omit: list) -> dict:
+    def evaluate(tokenizer, trained, texts: list, feature_set: list) -> dict:
 
         # Initialize a tuple containing enumerated, tokenized text values
         documents = enumerate(trained.pipe((tokenizer(text) for text in texts)))
@@ -81,30 +81,26 @@ class SpacyTextCatTrainer (MLTrainer):
         # Iterate through each of the index-document pairs
         for index, document in documents:
 
-            # Retrieve the gold
-            category = categories[index]['cats']
+            # Initialize a handle to the features
+            labels = feature_set[index]['cats']
 
             # Iterate through the label-score pairs
-            for label, score in document.cats.items():
-
-                # If the label is not contained in gold or if it's NEGATIVE, continue
-                if label not in category or label in omit:
-                    continue
+            for feature, score in document.cats.items():
 
                 # Increment the true positive score
-                if score >= 0.5 and category[label] >= 0.5:
+                if score >= 0.5 and labels[feature] >= 0.5:
                     true_positive += 1.0
 
                 # Increment the false positive score
-                elif score >= 0.5 > category[label]:
+                elif score >= 0.5 > labels[feature]:
                     false_positive += 1.0
 
                 # Increment the true negative score
-                elif score < 0.5 and category[label] < 0.5:
+                elif score < 0.5 and labels[feature] < 0.5:
                     true_negative += 1
 
                 # Increment the false negative score
-                elif score < 0.5 <= category[label]:
+                elif score < 0.5 <= labels[feature]:
                     false_negative += 1
 
         # Calculate the precision & recall
@@ -125,25 +121,124 @@ class SpacyTextCatTrainer (MLTrainer):
             'recall'        : recall
         }
 
+    @staticmethod
+    def train_pipe(language, pipe_name, pipe, epochs, training_dataset, evaluation_text, evaluation_features):
+
+        from import_modules import import_modules
+
+        # Import the required modules
+        import_modules(SpacyTextCatTrainer, 0,
+                       spacy={'package_name': 'spacy',
+                              'training': {
+                                  'Example': {}
+                              },
+                              'util': {
+                                  'minibatch': {},
+                                  'compounding': {}
+                              }},
+                       thinc={'package_name': 'thinc',
+                              'api': {
+                                  'Adam': {}
+                              }},
+                       time={'package_name': 'time',
+                             'time': {}})
+
+        # Initialize the names
+        compounding = SpacyTextCatTrainer.compounding
+        minibatch   = SpacyTextCatTrainer.minibatch
+        time        = SpacyTextCatTrainer.time
+        Adam        = SpacyTextCatTrainer.Adam
+        Example     = SpacyTextCatTrainer.Example
+
+        # Retrieve all the pipes that are not the text classifier
+        pipe_names = [name for name in language.pipe_names if name != pipe_name]
+
+        # Report to the user
+        if SpacyTextCatTrainer.Log is not None: SpacyTextCatTrainer.Log.Info(f'Pipes: {language.pipe_names}')
+
+        # Initialize the choices
+        choices = []
+
+        # Disable all the pipes except the classifier
+        with language.disable_pipes(*pipe_names):
+
+            # Create the optimizer with the default sgd
+            optimizer = language.initialize(sgd=Adam())
+
+            # Report to the user
+            if SpacyTextCatTrainer.Log is not None: SpacyTextCatTrainer.Log.Info(f'Training {pipe_name}; epochs {epochs}')
+
+            # Intialize the start time
+            start_time = time()
+
+            # Performing training
+            for epoch in range(epochs):
+
+                # Initialize the losses
+                losses = {}
+
+                # Retrieve the batches
+                batches = minibatch(training_dataset, size=compounding(4., 32., 1.001))
+
+                # Initialize the batch count
+                batch_count = 0
+
+                # Iterate through each batch
+                for batch in batches:
+
+                    # Increment the batch count
+                    batch_count += 1
+
+                    # Report
+                    if SpacyTextCatTrainer.Log is not None:
+
+                        SpacyTextCatTrainer.Log.Info(f'Training: Epoch {epoch} Batch {batch_count}')
+
+                    # Iterate through the text-annotations pairs
+                    for text, features in batch:
+
+                        # Initialize the example
+                        example = Example.from_dict(language.make_doc(text), {'cats': features})
+
+                        # Update the model with the example
+                        language.update([example], drop=0.2, sgd=optimizer, losses=losses)
+
+                # Initialize the metrics
+                training_time = time() - start_time
+
+                # With the optimizer averages
+                with pipe.model.use_params(optimizer.averages):
+
+                    # Calculate & retrieve the metrics
+                    metrics = SpacyTextCatTrainer.evaluate(language.tokenizer, pipe, evaluation_text,
+                                                           evaluation_features, [])
+
+                # Insert the training time (seconds)
+                metrics['training_time'] = training_time
+
+                # Report
+                if SpacyTextCatTrainer.Log is not None: SpacyTextCatTrainer.Log.Info(f'Trained {pipe_name} - {str(metrics)}')
+
+                # Append to the choices
+                choices.append((language.to_bytes(), language.config, metrics))
+
+        # Return the result
+        return metrics
+
     ## -----------
     ## Constructor
 
-    def __init__(self, model, pipe_name, labels, dataset, columns: dict, separator=',',
-                 evaluation_omit=[], split=0.8, epochs=10):
+    def __init__(self, spacy_model, dataset, split=0.8, epochs=10):
         """
         Initializes & trains the Spacy Textcat pipe
-        :param model: The name of the spacy language model
-        :param pipe_name: The name of the pipe
-        :param labels: The training labels
+        :param spacy_model: The name of the spacy language model
+        :param textcat_multilabel: The name of the pipe
         :param dataset: The dataset to train/evaluate
-        :param pipe_configuration: The pipe configuration
-        :param columns: The columns to extract into the training data
-        :param separator: The sequence separating the data
         :param split: The ratio representing the data split
         :param epochs: The amount of training cycles
         """
         # Retrieved the formatted training & evaluation datasets
-        super().__init__(dataset, columns, separator, split)
+        super().__init__(dataset, split)
 
         from import_modules import import_modules
 
@@ -164,90 +259,72 @@ class SpacyTextCatTrainer (MLTrainer):
                        thinc={'package_name': 'thinc',
                               'api': {
                                   'Adam': {}
-                              }})
+                              }},
+                       time={'package_name': 'time',
+                             'time': {}})
+
+        spancat_dataset = dataset['spancat'] if 'spancat' in dataset else {}
+        textcat_dataset = dataset['textcat'] if 'textcat' in dataset else {}
+
+        spancat_labels = spancat_dataset['labels']
+        textcat_labels = textcat_dataset['labels']
+
+        spancat_data = spancat_dataset['data']
+        textcat_data = textcat_dataset['data']
 
         # Report to the user
-        if SpacyTextCatTrainer.Log is not None: SpacyTextCatTrainer.Log.Info(f'Loading spacy model: {model}')
+        if SpacyTextCatTrainer.Log is not None: SpacyTextCatTrainer.Log.Info(f'Loading spacy model: {spacy_model}')
 
         # Initialize the names
-        blank       = SpacyTextCatTrainer.blank
-        load        = SpacyTextCatTrainer.load
-        compounding = SpacyTextCatTrainer.compounding
-        minibatch   = SpacyTextCatTrainer.minibatch
-        Adam        = SpacyTextCatTrainer.Adam
-        Example     = SpacyTextCatTrainer.Example
-
-        # Initialize the Language
-        nlp = None
+        blank = SpacyTextCatTrainer.blank
+        load  = SpacyTextCatTrainer.load
 
         try:
 
             # Attempt to Load the spaCy Model
-            nlp = blank(load(model).lang)
+            nlp = blank(load(spacy_model).lang)
 
         # Except
         except OSError as error:
 
             # Report to the user
-            SpacyTextCatTrainer.Log.Warn(f'Model \'{model}\' not found. Attempting to retrieve.')
+            SpacyTextCatTrainer.Log.Warn(f'Model \'{spacy_model}\' not found. Attempting to retrieve.')
 
             from sys import executable
             from subprocess import run
 
             # Attempt to install the module
-            run([executable, '-m', 'spacy', 'download', model])
+            run([executable, '-m', 'spacy', 'download', spacy_model])
 
             # Attempt to load the spaCy model
-            nlp = blank(load(model).lang)
+            nlp = blank(load(spacy_model).lang)
 
         # Report to the user
-        if SpacyTextCatTrainer.Log is not None: SpacyTextCatTrainer.Log.Info(f'Preparing pipe: {pipe_name}')
+        if SpacyTextCatTrainer.Log is not None: SpacyTextCatTrainer.Log.Info(f'Preparing pipes')
 
         # Create the pipe using the default single-label config
-        text_cat = SpacyTextCatTrainer.prepare_pipe(nlp, pipe_name, {}, labels)
+        spancat = SpacyTextCatTrainer.prepare_pipe(nlp, 'spancat', {}, spancat_labels)
+        textcat = SpacyTextCatTrainer.prepare_pipe(nlp, 'textcat_multilabel', {}, textcat_labels)
 
-        # Retrieve all the pipes that are not the text classifier
-        pipe_names = [name for name in nlp.pipe_names if name != pipe_name]
+        # Prep the data
+        spancat_training, spancat_evaluation = MLTrainer.prepare(spancat_data, split)
+        textcat_training, textcat_evaluation = MLTrainer.prepare(textcat_data, split)
 
-        # Report to the user
-        if SpacyTextCatTrainer.Log is not None: SpacyTextCatTrainer.Log.Info(f'Pipes: {nlp.pipe_names}')
+        # Split the evalutation & featuresets for spancat
+        spancat_evaluation_text     = [text for text, features in spancat_evaluation]
+        spancat_evaluation_features = [features for text, features in spancat_evaluation]
 
-        # Disable all the pipes except the classifier
-        with nlp.disable_pipes(*pipe_names):
+        # Split the evalutation & featuresets for textcat
+        textcat_evaluation_text     = [text for text, features in textcat_evaluation]
+        textcat_evaluation_features = [features for text, features in textcat_evaluation]
 
-            # Create the optimizer with the default sgd
-            optimizer = nlp.initialize(sgd=Adam())
+        # Train the spancat pipe
+        SpacyTextCatTrainer.train_pipe(nlp, 'spancat', spancat, epochs, spancat_training,
+                                       spancat_evaluation_text, spancat_evaluation_features)
 
-            # Report to the user
-            if SpacyTextCatTrainer.Log is not None: SpacyTextCatTrainer.Log.Info(f'Training')
-
-            # Performing training
-            for epoch in range(epochs):
-
-                # Initialize the losses
-                losses = {}
-
-                # Retrieve the batches
-                batches = minibatch(self.training_dataset, size=compounding(4., 32., 1.001))
-
-                # Iterate through each batch
-                for batch in batches:
-
-                    # Iterate through the text-annotations pairs
-                    for text, annotations in batch:
-
-                        # Initialize the example
-                        example = Example.from_dict(nlp.make_doc(text), annotations)
-
-                        # Update the model with the example
-                        nlp.update([example], drop=0.2, sgd=optimizer, losses=losses)
-
-                # With the optimizer averages
-                with text_cat.model.use_params(optimizer.averages):
-
-                    # Calculate & retrieve the metrics
-                    self._metrics = SpacyTextCatTrainer.evaluate(nlp.tokenizer, text_cat, self.evaluation_text,
-                                                                self.evaluation_categories, evaluation_omit)
+        # Train the textcat pipe
+        SpacyTextCatTrainer.train_pipe(nlp, 'textcat_multilabel', textcat, epochs, textcat_training,
+                                       textcat_evaluation_text, textcat_evaluation_features)
 
         # Initialize the language, configuration & bytes
         self._language          = nlp

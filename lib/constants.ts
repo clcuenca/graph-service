@@ -241,7 +241,7 @@ export module Constants {
                             },
                             dataset: {
                                 type: 'String',
-                                default: 'hatecheck.csv'
+                                default: 'ucberkely.json'
                             },
                             model: {
                                 type: 'String',
@@ -252,10 +252,6 @@ export module Constants {
                                     'en_core_web_lg',
                                     'en_core_web_trf'
                                 ]
-                            },
-                            parameters: {
-                                type: 'String',
-                                default: '--pipe_name textcat --labels POSITIVE NEGATIVE --omit NEGATIVE'
                             }
                         },
                         mainSteps: [

@@ -7,20 +7,14 @@ in S3 buckets into serialized versions placed into another S3 bucket.another
 ## -------
 ## Imports
 
-import sys          # Command-line arguments
-import re           # Regex
+import sys  # Command-line arguments
+import re   # Regex
+import json # Parse dataset
 
 from arguments import Arguments
 from log import Log
 from mltrainer import MLTrainer
 from spacy_trainer import SpacyTextCatTrainer
-
-def column_map(value) -> dict:
-    return {'cats': {'POSITIVE': value == 'hateful', 'NEGATIVE': value != 'non-hateful'}}
-
-columns = {'test_case': None, 'label_gold': column_map}
-
-REQUIRED_ARGUMENTS = ['datasetbucket', 'modelsbucket', 'dataset', 'model', 'pipe_name', 'labels', 'omit', 'dataset']
 
 ## ------
 ## Script
@@ -32,16 +26,7 @@ if __name__ == "__main__":
     SpacyTextCatTrainer.Log = log
 
     # Consume the arguments
-    arguments = Arguments(sys.argv)
-
-    # Check the required arguments
-    for required in REQUIRED_ARGUMENTS:
-
-        # Check
-        if required not in arguments.dictionary:
-
-            # Log the error and exit
-            log.Error(f'Error: Required argument \'{required}\' not specified.')
+    arguments = Arguments(sys.argv, ['datasetbucket', 'modelsbucket', 'dataset', 'spacy_model'])
 
     # Import the required modules
     from import_modules import import_modules
@@ -75,21 +60,17 @@ if __name__ == "__main__":
     try:
 
         # Retrieve the arguments
-        model           = arguments['model']                            # en_core_web_sm
-        pipe_name       = arguments['pipe_name']                        # textcat
-        labels          = arguments['labels']                           # ['POSITIVE', 'NEGATIVE']
-        omit            = arguments['omit']                             # ['NEGATIVE']
-        dataset_key     = re.sub(r'(.csv)+', '', arguments['dataset'])  # Hateful.csv
+        spacy_model     = arguments['spacy_model']                                   # en_core_web_sm
+        dataset_key     = re.sub(r'(\.[a-zA-Z0-9]+)+', '', arguments['dataset'])     # Hateful.csv
+
+        log.Info(f'Retrieving dataset: {arguments["datasetbucket"]}/{dataset_key}')
 
         # Attempt to retrieve the data
         dataset = resource('s3').Object(arguments['datasetbucket'], arguments['dataset'])
-        dataset = BytesIO(dataset.get()['Body'].read())
-
-        # Make sure single values are in a list
-        if not isinstance(omit, list): omit = [omit]
+        dataset = json.loads(dataset.get()['Body'].read())
 
         # Train the model
-        trainer = SpacyTextCatTrainer(model, pipe_name, labels, dataset, columns, evaluation_omit=omit)
+        trainer = SpacyTextCatTrainer(spacy_model, dataset)
 
         # Report to the user
         Log.Info(f'Retrieving models bucket: {arguments["modelsbucket"]}.')
@@ -98,7 +79,6 @@ if __name__ == "__main__":
         models_bucket = resource('s3').Bucket(arguments['modelsbucket'])
 
         # Retrieve the metrics
-        # TODO: Add training time
         metrics = trainer.metrics()
 
         # Set the dataset field

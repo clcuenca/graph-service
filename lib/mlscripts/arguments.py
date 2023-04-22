@@ -13,6 +13,11 @@ class Arguments:
     @author Carlos L. Cuenca
     """
 
+    ## -------------
+    ## Static Fields
+
+    Log = None
+
     ## --------------
     ## Static Methods
 
@@ -78,7 +83,7 @@ class Arguments:
     ## ---------
     ## Overloads
 
-    def __init__(self, arguments):
+    def __init__(self, arguments, required):
         """
         Initializes the Arguments instance to its' default state.
         :param arguments: The arguments list to parse
@@ -87,6 +92,18 @@ class Arguments:
         # Initialize the collection
         self.dictionary = Arguments.parse_from(arguments)
         self.count = len(self.dictionary)
+
+        # If we have required arguments
+        if required is not None:
+
+            # Check the required arguments
+            for argument in required:
+
+                # Check
+                if argument not in self.dictionary:
+
+                    # Log the error and exit
+                    if Arguments.Log is not None: Arguments.Log.Error(f'Error: Required argument \'{argument}\' not specified.')
 
     def __dict__(self):
         """
