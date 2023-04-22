@@ -100,11 +100,10 @@ class Arguments:
             for argument in required:
 
                 # Check
-                if argument not in arguments.dictionary:
+                if argument not in self.dictionary:
 
                     # Log the error and exit
                     if Arguments.Log is not None: Arguments.Log.Error(f'Error: Required argument \'{argument}\' not specified.')
-
 
     def __dict__(self):
         """

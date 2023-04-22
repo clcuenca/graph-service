@@ -608,7 +608,7 @@ def initialize_workers(arguments, config, model, n_threads=1, current_file_size=
     for worker in workers:
 
         # Initialize & append the thread
-        threads.append(threading.Thread(target=worker.ingest, args=(retain, language_key)))
+        threads.append(threading.Thread(target=worker.bulk_local, args=(retain, language_key)))
 
     # Log
     if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Workers Initialized')
@@ -757,16 +757,7 @@ if __name__ == "__main__":
     OpenSearchWorker.Log = log = Log()
 
     # Consume the arguments
-    args = Arguments(sys.argv)
+    args = Arguments(sys.argv, REQUIRED_ARGUMENTS)
 
-    # Check the required arguments
-    for required in REQUIRED_ARGUMENTS:
-
-        # Check
-        if required not in args.dictionary:
-
-            # Log the error and exit
-            log.Error(f'Error: Required argument \'{required}\' not specified.')
-
-    ingest_s3_files(args, int(args['threads']))
-    #ingest_local_files(args, int(args['threads']), '/media/cuenca/data/parler_/parler_data/')
+    #ingest_s3_files(args, int(args['threads']))
+    ingest_local_files(args, int(args['threads']), '/media/cuenca/data/parler_/parler_data/')
