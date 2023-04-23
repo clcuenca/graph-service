@@ -205,6 +205,9 @@ export class AlphaStage extends Stage {
                 new GrantBucketReadPolicyStatement({
                     bucket: this.mlModelsBucket.bucket
                 }),
+                new GrantBucketPutPolicyStatement({
+                    bucket: this.datasetsBucket.bucket
+                }),
                 new GrantBucketReadPolicyStatement({
                     bucket: this.datasetsBucket.bucket
                 }),
@@ -221,7 +224,7 @@ export class AlphaStage extends Stage {
             account:            props.account,
             region:             props.region,
             stackId:            `${props.appName}AlgorithmicInstanceStack`,
-            id:                 `${props.appName}AlgorthmicInstance`,
+            id:                 `${props.appName}AlgorithmicInstance`,
             instanceType:       props.algorithmicInstanceType,
             machineImage:       props.algorithmicMachineImage,
             keyname:            props.algorithmicKeyPairName,

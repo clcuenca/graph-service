@@ -23,7 +23,9 @@ export class GrantBucketPutPolicyStatement extends PolicyStatement {
 
     public constructor(props: GrantBucketPutPolicyStatementProps) {
         super({
-            resources: [`${props.bucket.bucketArn}/*`],
+            resources: [
+                `${props.bucket.bucketArn}`,
+                `${props.bucket.bucketArn}/*`],
             actions: ['s3:PutObject'],
             effect: Effect.ALLOW
         });
