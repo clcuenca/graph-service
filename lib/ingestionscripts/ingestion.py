@@ -361,25 +361,33 @@ class OpenSearchWorker:
         lines_read = 0
         terminate = False
 
+        import time
+        import signal
         import os
         import psutil
+        import json
 
         p = psutil.Process(os.getpid())
         p.cpu_affinity([self.count % 20])
 
-        actions = []
-        bulk    = 1000
+        start_time = time.time()
+
+        actions     = []
+        bulk        = 1000
+        lines_read  = 0
+
+        mask = signal.pthread_sigmask(signal.SIG_BLOCK, {})
+        signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
 
         while self.language is not None and True:
+
+            progress   = 0
 
             # Iterate while we have a language
             for count in range(bulk):
 
                 # Initialize the line
                 line = None
-
-                # Initialize the progress
-                progress = 0
 
                 # Attempt
                 try:
@@ -410,10 +418,7 @@ class OpenSearchWorker:
                     print(f'Thread {self.count} - Error')
 
                 # Break condition
-                if terminate: break
-
-                # Print out the progress
-                OpenSearchWorker.Log.Info(f'File: {self.file} - Thread {self.count} - Lines Read: {lines_read}, {progress:.1f}%')
+                if line is None or terminate: break
 
                 # Initialize the entry
                 entry = {key: value for key, value in json.loads(line).items() if key in retain_keys}
@@ -434,12 +439,21 @@ class OpenSearchWorker:
 
                     # Initialize the index name & createdAt
                     index       = entry['datatype']
+                    createdAt   = entry['createdAt']
 
                     # Delete the key
                     del entry['datatype']
 
+                    action  = json.dumps({'index': {'_index': index, "_id": f'{entry["creator"]}:{createdAt}'}}) + '\n'
+                    action += json.dumps(entry) + '\n'
+
                     # Add to actions
-                    actions.append({'index': entry})
+                    actions.append(action)
+
+            rate = lines_read / (time.time() - start_time)
+
+            # Print out the progress
+            OpenSearchWorker.Log.Info(f'Thread {self.count} - Lines Read: {lines_read}, {progress:.1f}% - {rate:.1f} lines/second')
 
             # Create the index if it does not exist
             if not self.client.indices.exists(index):
@@ -469,12 +483,27 @@ class OpenSearchWorker:
                     }
                 })
 
-                # Bulk upload
-                self.client.bulk(actions, index=index)
+            attempt = True
+
+            while attempt:
+
+                try:
+
+                    # Bulk upload
+                    self.client.bulk(actions, index=index)
+
+                    # Update the flag
+                    attempt = False
+
+                except:
+
+                    if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Retrying index')
 
         else:
 
             if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Skipping entry')
+
+        signal.pthread_sigmask(signal.SIG_SETMASK, mask)
 
     def ingest(self, retain_keys, language_key):
 
@@ -482,11 +511,11 @@ class OpenSearchWorker:
         lines_read = 0
         terminate = False
 
-        import os
-        import psutil
+        #import os
+        #import psutil
 
-        p = psutil.Process(os.getpid())
-        p.cpu_affinity([self.count % 20])
+        #p = psutil.Process(os.getpid())
+        #p.cpu_affinity([self.count % 20])
 
         # Iterate while we have a language
         while self.language is not None:
@@ -558,6 +587,7 @@ class OpenSearchWorker:
 
                 # Create the index if it does not exist
                 if not self.client.indices.exists(index):
+
                     # Create it if necessary
                     self.client.indices.create(index, body={
                         'mappings': {
@@ -702,7 +732,7 @@ def ingest_local_files(arguments, n_threads, path):
     # Retrieve each file
     files       = [os.path.join(path, file) for file in os.listdir(path) if os.path.isfile(os.path.join(path, file))]
     pool        = []
-    chunks      = 20
+    chunks      = 1
     count       = 0
     _read_file  = None
 
@@ -759,5 +789,7 @@ if __name__ == "__main__":
     # Consume the arguments
     args = Arguments(sys.argv, REQUIRED_ARGUMENTS)
 
+    number = int(args['set'])
+
     #ingest_s3_files(args, int(args['threads']))
-    ingest_local_files(args, int(args['threads']), '/media/cuenca/data/parler_/parler_data/')
+    ingest_local_files(args, int(args['threads']), f'/media/cuenca/data/parler_/parler_data/data{number}')
