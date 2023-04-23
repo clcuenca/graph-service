@@ -9,6 +9,7 @@ import signal
 import os
 import re
 
+from pathlib import Path
 from datetime import datetime
 from log import Log
 from arguments import Arguments
@@ -259,6 +260,7 @@ class OpenSearchWorker:
             self.lines_read         = 0
             self.current_file_read  = 0
             self.progress           = 0
+            self.local_count        = 0
             self.mask               = None
             self.start_time         = None
             self.action_count       = 1000
@@ -299,8 +301,8 @@ class OpenSearchWorker:
         import psutil
 
         # Set the affinity
-        #p = psutil.Process(os.getpid())
-        #p.cpu_affinity([self.count])
+        p = psutil.Process(os.getpid())
+        p.cpu_affinity([self.count])
 
         # Prevent from being interrupted
         self.mask = signal.pthread_sigmask(signal.SIG_BLOCK, {})
@@ -319,14 +321,20 @@ class OpenSearchWorker:
         # Update the amount of bytes read
         self.current_file_read += len(line) + 1
 
+        # Update the local count
+        self.local_count += 1
+
         # Print out the progress
-        if OpenSearchWorker.Log is not None and len(self.actions) >= self.action_count:
+        if OpenSearchWorker.Log is not None and self.local_count >= self.action_count:
 
             # Calculate the progress
             self.progress = (self.current_file_read / self.current_file_size) * 100
 
             # Calculate the rate
             rate = self.lines_read / (time.time() - self.start_time)
+
+            # Clear the local count
+            self.local_count = 0
 
             # Report
             OpenSearchWorker.Log.Info(f'Thread {self.count} - Lines Read: {self.lines_read}, {self.progress:.1f}% - {rate:.1f} lines/second')
@@ -425,6 +433,8 @@ class OpenSearchWorker:
             # Calculate the amount of seconds
             created = entry['createdAtformatted'].split(' ')
             created = created[0] + ' ' + created[1]
+
+            date    = created.split(' ')[0].split('-')
             created = datetime.strptime(created, '%Y-%m-%j %H:%M:%S')
 
             # Compute the seconds
@@ -434,10 +444,28 @@ class OpenSearchWorker:
             entry['seconds'] = seconds
 
             # Initialize the key
-            key = f'{self.root_key}/{str(seconds)}/{entry["id"]}.json'
+            key = f'/media/cuenca/data/parler_/processed/{date[0]}_{date[1]}_{date[2]}.json'
+
+            # If the file does not exist
+            if not Path(key).is_file():
+
+                # Simply create it
+                with open(key, 'w') as output:
+
+                    # Write
+                    output.write(json.dumps(entry))
+
+            # Otherwise
+            else:
+
+                # Open in append mode
+                with open(key, 'a') as output:
+
+                    # Write
+                    output.write(f'\n{json.dumps(entry)}')
 
             # Bind the entry
-            self.bucket.put_object(Key=f'{key}', Body=bytes(json.dumps(entry).encode('utf-8')))
+            #self.bucket.put_object(Key=f'{key}', Body=bytes(json.dumps(entry).encode('utf-8')))
 
     def attempt_index(self):
 
@@ -477,25 +505,17 @@ class OpenSearchWorker:
             # Attempt
             try:
 
-                if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Reading Line')
-
                 # To read the line
                 line = self.line_from_file(self)
 
-                if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Setting Entry')
-
                 # Set the entry
                 self.set_entry(line)
-
-                if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Updating Metrics')
 
                 # Update the metrics
                 self.update_metrics(line)
 
                 # Check if we reached the maximum amount of actions
                 if len(self.actions) == self.action_count and self.ingest_index is not None:
-
-                    if OpenSearchWorker.Log is not None: OpenSearchWorker.Log.Info(f'Attempting index')
 
                     # Attempt to index
                     self.ingest_index()
@@ -653,5 +673,5 @@ if __name__ == "__main__":
     OpenSearchWorker.Key    = args['dataset']
 
     # Ingest
-    ingest_s3_files(args, int(args['threads']))
-    #ingest_local_files(args, int(args['threads']), f'/media/cuenca/data/parler_/parler_data/data{int(args['set'])}')
+    #ingest_s3_files(args, int(args['threads']))
+    ingest_local_files(args, int(args['threads']), f'/media/cuenca/data/parler_/parler_data/data{int(args["set"])}')

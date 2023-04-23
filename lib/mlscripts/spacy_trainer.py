@@ -178,7 +178,7 @@ class SpacyTextCatTrainer (MLTrainer):
                 losses = {}
 
                 # Retrieve the batches
-                batches = minibatch(training_dataset, size=compounding(4., 32., 1.001))
+                batches = minibatch(training_dataset, size=compounding(4., 64., 1.001))
 
                 # Initialize the batch count
                 batch_count = 0
@@ -228,7 +228,7 @@ class SpacyTextCatTrainer (MLTrainer):
     ## -----------
     ## Constructor
 
-    def __init__(self, spacy_model, dataset, split=0.8, epochs=1):
+    def __init__(self, spacy_model, dataset, split=0.8, epochs=8):
         """
         Initializes & trains the Spacy Textcat pipe
         :param spacy_model: The name of the spacy language model
@@ -245,6 +245,8 @@ class SpacyTextCatTrainer (MLTrainer):
         # Import the required modules
         import_modules(SpacyTextCatTrainer, 0,
                        spacy={'package_name': 'spacy',
+                              'prefer_gpu': {},
+                              'require_gpu': {},
                               'blank': {},
                               'load': {},
                               'Language': {},
@@ -271,6 +273,8 @@ class SpacyTextCatTrainer (MLTrainer):
 
         spancat_data = spancat_dataset['data']
         textcat_data = textcat_dataset['data']
+
+        SpacyTextCatTrainer.prefer_gpu()
 
         # Report to the user
         if SpacyTextCatTrainer.Log is not None: SpacyTextCatTrainer.Log.Info(f'Loading spacy model: {spacy_model}')
