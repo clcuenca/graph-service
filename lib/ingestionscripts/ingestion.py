@@ -753,7 +753,7 @@ def ingest_local_files(arguments, n_threads, path):
         # Initialize the threads
         threads = initialize_workers(arguments, config, model, n_threads, _read_file.size(), _read_file)
 
-        # Iterate through the threads
+        # Iterate through the threadscd
         for thread in threads:
 
             # Start
@@ -791,5 +791,5 @@ if __name__ == "__main__":
 
     number = int(args['set'])
 
-    #ingest_s3_files(args, int(args['threads']))
-    ingest_local_files(args, int(args['threads']), f'/media/cuenca/data/parler_/parler_data/data{number}')
+    ingest_s3_files(args, int(args['threads']))
+    #ingest_local_files(args, int(args['threads']), f'/media/cuenca/data/parler_/parler_data/data{number}')
